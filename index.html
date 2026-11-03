@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestão de Funcionários</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 30px auto; padding: 0 15px; background: #f8fafc; color: #0f172a; }
+    h1, h2 { color: #1e293b; }
+    form { display: grid; gap: 12px; margin-bottom: 30px; background: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #e2e8f0; }
+    input, button { padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+    button { background: #0284c7; color: white; border: none; cursor: pointer; font-weight: bold; }
+    button:hover { background: #0369a1; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+    th, td { border-bottom: 1px solid #e2e8f0; padding: 12px; text-align: left; }
+    th { background: #f1f5f9; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <h1>Painel de Funcionários</h1>
+
+  <h2>Cadastrar Novo Funcionário</h2>
+  <form id="formFuncionario">
+    <input type="text" id="nome" placeholder="Nome Completo" required>
+    <input type="email" id="email" placeholder="E-mail" required>
+    <input type="text" id="cargo" placeholder="Cargo" required>
+    <input type="text" id="departamento" placeholder="Departamento" required>
+    <button type="submit">Salvar Funcionário</button>
+  </form>
+
+  <h2>Lista de Funcionários</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>E-mail</th>
+        <th>Cargo</th>
+        <th>Departamento</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaFuncionarios"></tbody>
+  </table>
+
+  <script>
+    // Substitua os textos dentro das aspas simples pelas informações que você salvou no Bloco de Notas:
+    const SUPABASE_URL = 'https://tnlsqmrluxugwialhrej.supabase.co/rest/v1/';
+    const SUPABASE_KEY = 'sb_publishable_QaX1w_iFxZold_RnCkHtSA_z6hAbM-2';
+
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function carregarFuncionarios() {
+      const { data, error } = await _supabase.from('funcionarios').select('*').order('created_at', { ascending: false });
+      if (error) {
+        console.error('Erro ao buscar dados:', error);
+        return;
+      }
+
+      const tbody = document.getElementById('tabelaFuncionarios');
+      tbody.innerHTML = '';
+      data.forEach(f => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${f.nome}</td>
+            <td>${f.email}</td>
+            <td>${f.cargo}</td>
+            <td>${f.departamento}</td>
+          </tr>
+        `;
+      });
+    }
+
+    document.getElementById('formFuncionario').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nome = document.getElementById('nome').value;
+      const email = document.getElementById('email').value;
+      const cargo = document.getElementById('cargo').value;
+      const departamento = document.getElementById('departamento').value;
+
+      const { error } = await _supabase.from('funcionarios').insert([{ nome, email, cargo, departamento }]);
+      
+      if (error) {
+        alert('Erro ao cadastrar: ' + error.message);
+      } else {
+        e.target.reset();
+        carregarFuncionarios();
+      }
+    });
+
+    carregarFuncionarios();
+  </script>
+</body>
+</html>
