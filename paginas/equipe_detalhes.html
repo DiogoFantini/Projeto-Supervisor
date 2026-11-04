@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalhes da equipe</title>
+  <link rel="stylesheet" href="../css/css_barra_lateral.css">
+  <link rel="stylesheet" href="../css/css_equipe_detalhes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/barra_lateral.js"></script>
+  <script src="../js/equipe_detalhes.js" defer></script>
+</head>
+<body>
+
+  <main class="conteudo-principal">
+    <a href="unidades.html" id="btn_voltar_unidade" class="btn-voltar">← Voltar para unidade</a>
+    
+    <div class="cabecalho-pagina">
+      <h1 id="titulo_equipe_detalhes">Carregando...</h1>
+      <div class="acoes-cabecalho">
+        <input 
+          type="text" 
+          id="campo_busca_integrante" 
+          class="campo-busca" 
+          placeholder="Buscar funcionário na equipe..." 
+          oninput="filtrar_integrantes()"
+        >
+        <button type="button" class="btn-principal" onclick="abrir_modal_adicionar_funcionario()">+ Adicionar funcionário à equipe</button>
+        <button type="button" id="btn_modo_remover_func" class="btn-perigo" onclick="alternar_modo_remover_funcionario()">Remover funcionário</button>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nome do funcionário</th>
+          <th>Cargo</th>
+          <th>Especialização</th>
+          <th id="coluna_acoes_cabecalho_func" class="coluna-remocao oculto">Ação</th>
+        </tr>
+      </thead>
+      <tbody id="tabela_integrantes_equipe"></tbody>
+    </table>
+  </main>
+
+  <!-- MODAL PARA ADICIONAR FUNCIONÁRIO -->
+  <div id="modal_adicionar_funcionario_equipe" class="modal-overlay oculto">
+    <div class="modal-card">
+      <span class="modal-fechar" onclick="fechar_modal_adicionar_funcionario()">&times;</span>
+      <h2>Adicionar funcionário à equipe</h2>
+      <form id="form_adicionar_funcionario_equipe" class="form-cadastro" style="margin-top: 16px;">
+        <label><strong>Selecione o funcionário registrado<span class="obrigatorio">*</span></strong></label>
+        <select id="select_funcionario_disponivel" required>
+          <option value="">Carregando funcionários...</option>
+        </select>
+
+        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px;">
+          <button type="button" style="background-color: #64748b; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="fechar_modal_adicionar_funcionario()">Cancelar</button>
+          <button type="submit" class="btn-principal">Adicionar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIRMAÇÃO DE REMOÇÃO DE FUNCIONÁRIO -->
+  <div id="modal_confirmar_remocao_funcionario" class="modal-overlay oculto">
+    <div class="modal-card">
+      <span class="modal-fechar" onclick="fechar_modal_confirmar_remocao()">&times;</span>
+      <h2>Confirmar remoção</h2>
+      <p style="margin-top: 16px; color: #334155;">
+        Tem certeza que deseja remover o funcionário <strong id="nome_funcionario_remover"></strong> desta equipe?
+      </p>
+      <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px;">
+        <button type="button" style="background-color: #64748b; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="fechar_modal_confirmar_remocao()">Cancelar</button>
+        <button type="button" class="btn-perigo" onclick="executar_remocao_funcionario()">Confirmar remoção</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

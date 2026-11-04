@@ -3,6 +3,8 @@ const SUPABASE_KEY = 'sb_publishable_QaX1w_iFxZold_RnCkHtSA_z6hAbM-2';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let lista_funcionarios_todos = [];
+let lista_unidades_todas = [];
+let funcionario_atual = null;
 
 async function verificar_autenticacao() {
   const { data: { session } } = await _supabase.auth.getSession();
@@ -16,7 +18,7 @@ async function verificar_autenticacao() {
 async function carregar_funcionarios() {
   const { data, error } = await _supabase
     .from('funcionarios')
-    .select('*, equipes(nome, unidades(nome)))')
+    .select('*, equipes(id, nome, unidade_id, unidades(id, nome)))')
     .order('created_at', { ascending: false });
 
   if (error) return console.error('Erro ao buscar funcionários:', error);
@@ -82,12 +84,17 @@ function filtrar_funcionarios() {
 }
 
 function abrir_modal_detalhes(funcionario) {
+  funcionario_atual = funcionario;
+
   document.getElementById('detalhe_nome').innerText = funcionario.nome || '-';
   document.getElementById('detalhe_cargo').innerText = funcionario.cargo || '-';
   document.getElementById('detalhe_registro').innerText = funcionario.registro_profissional || '-';
   document.getElementById('detalhe_especializacao').innerText = funcionario.especializacao || '-';
   document.getElementById('detalhe_equipe').innerText = funcionario.equipes?.nome || '-';
   document.getElementById('detalhe_unidade').innerText = funcionario.equipes?.unidades?.nome || '-';
+
+  document.getElementById('modo_visualizacao_funcionario').classList.remove('oculto');
+  document.getElementById('modo_edicao_funcionario').classList.add('oculto');
 
   const modal = document.getElementById('modal_detalhes_funcionario');
   if (modal) modal.classList.remove('oculto');
@@ -96,6 +103,28 @@ function abrir_modal_detalhes(funcionario) {
 function fechar_modal_detalhes() {
   const modal = document.getElementById('modal_detalhes_funcionario');
   if (modal) modal.classList.add('oculto');
+  funcionario_atual = null;
+}
+
+async function ativar_modo_edicao_funcionario() {
+  if (!funcionario_atual) return;
+
+  document.getElementById('edit_nome_funcionario').value = funcionario_atual.nome || '';
+  document.getElementById('edit_cargo_funcionario').value = funcionario_atual.cargo || '';
+  document.getElementById('edit_registro_funcionario').value = funcionario_atual.registro_profissional || '';
+  document.getElementById('edit_especializacao_funcionario').value = funcionario_atual.especializacao || '';
+
+  atualizar_campo_registro_edicao();
+
+  document.getElementById('modo_visualizacao_funcionario').classList.add('oculto');
+  document.getElementById('modo_edicao_funcionario').classList.remove('oculto');
+
+  await carregar_unidades_select_edicao();
+}
+
+function cancelar_edicao_funcionario() {
+  document.getElementById('modo_edicao_funcionario').classList.add('oculto');
+  document.getElementById('modo_visualizacao_funcionario').classList.remove('oculto');
 }
 
 function atualizar_campo_registro() {
@@ -107,7 +136,6 @@ function atualizar_campo_registro() {
   if (!cargoSelect || !container || !label || !input) return;
 
   const cargo = cargoSelect.value;
-
   const mapeamentoRegistros = {
     'Médico(a)': { label: 'CRM:', placeholder: 'Ex: CRM/SP 123456' },
     'Enfermeiro(a)': { label: 'COREN:', placeholder: 'Ex: COREN-SP 123456' },
@@ -117,7 +145,7 @@ function atualizar_campo_registro() {
   };
 
   if (mapeamentoRegistros[cargo]) {
-    label.innerHTML = `<strong>${mapeamentoRegistros[cargo].label}</strong>`;
+    label.innerHTML = `<strong>${mapeamentoRegistros[cargo].label}<span class="obrigatorio">*</span></strong>`;
     input.placeholder = mapeamentoRegistros[cargo].placeholder;
     input.required = true;
     container.classList.remove('oculto');
@@ -128,9 +156,39 @@ function atualizar_campo_registro() {
   }
 }
 
-function abrir_modal_cadastro() {
+function atualizar_campo_registro_edicao() {
+  const cargoSelect = document.getElementById('edit_cargo_funcionario');
+  const container = document.getElementById('container_registro_profissional_edit');
+  const label = document.getElementById('label_registro_profissional_edit');
+  const input = document.getElementById('edit_registro_funcionario');
+
+  if (!cargoSelect || !container || !label || !input) return;
+
+  const cargo = cargoSelect.value;
+  const mapeamentoRegistros = {
+    'Médico(a)': { label: 'CRM:', placeholder: 'Ex: CRM/SP 123456' },
+    'Enfermeiro(a)': { label: 'COREN:', placeholder: 'Ex: COREN-SP 123456' },
+    'Técnico(a) de Enfermagem': { label: 'COREN:', placeholder: 'Ex: COREN-SP 123456' },
+    'Auxiliar de Enfermagem': { label: 'COREN:', placeholder: 'Ex: COREN-SP 123456' },
+    'Dentista': { label: 'CRO:', placeholder: 'Ex: CRO-SP 123456' }
+  };
+
+  if (mapeamentoRegistros[cargo]) {
+    label.innerHTML = `<strong>${mapeamentoRegistros[cargo].label}<span class="obrigatorio">*</span></strong>`;
+    input.placeholder = mapeamentoRegistros[cargo].placeholder;
+    input.required = true;
+    container.classList.remove('oculto');
+  } else {
+    input.value = '';
+    input.required = false;
+    container.classList.add('oculto');
+  }
+}
+
+async function abrir_modal_cadastro() {
   const modal = document.getElementById('modal_cadastro_funcionario');
   if (modal) modal.classList.remove('oculto');
+  await carregar_unidades_select();
 }
 
 function fechar_modal_cadastro() {
@@ -138,7 +196,152 @@ function fechar_modal_cadastro() {
   if (modal) modal.classList.add('oculto');
   const form = document.getElementById('form_cadastro_funcionario');
   if (form) form.reset();
+  
+  const containerEquipe = document.getElementById('container_equipe_funcionario');
+  const selectEquipe = document.getElementById('novo_equipe_funcionario');
+  if (containerEquipe) containerEquipe.classList.add('oculto');
+  if (selectEquipe) selectEquipe.required = false;
+
   atualizar_campo_registro();
+}
+
+async function carregar_unidades_select() {
+  const selectUnidade = document.getElementById('novo_unidade_funcionario');
+  if (!selectUnidade) return;
+
+  selectUnidade.innerHTML = '<option value="">Carregando unidades...</option>';
+
+  const { data: unidades, error } = await _supabase
+    .from('unidades')
+    .select('id, nome')
+    .order('nome', { ascending: true });
+
+  if (error) return console.error('Erro ao carregar unidades:', error);
+
+  lista_unidades_todas = unidades || [];
+  selectUnidade.innerHTML = '<option value="">-- Selecione a unidade (opcional) --</option>';
+
+  lista_unidades_todas.forEach(u => {
+    selectUnidade.innerHTML += `<option value="${u.id}">${u.nome}</option>`;
+  });
+}
+
+async function carregar_equipes_da_unidade() {
+  const unidadeId = document.getElementById('novo_unidade_funcionario').value;
+  const containerEquipe = document.getElementById('container_equipe_funcionario');
+  const selectEquipe = document.getElementById('novo_equipe_funcionario');
+
+  if (!unidadeId) {
+    containerEquipe.classList.add('oculto');
+    selectEquipe.innerHTML = '<option value="">-- Selecione a equipe --</option>';
+    selectEquipe.value = '';
+    selectEquipe.required = false;
+    return;
+  }
+
+  selectEquipe.innerHTML = '<option value="">Carregando equipes...</option>';
+  containerEquipe.classList.remove('oculto');
+  selectEquipe.required = true;
+
+  const { data: equipes, error } = await _supabase
+    .from('equipes')
+    .select('id, nome')
+    .eq('unidade_id', unidadeId)
+    .order('nome', { ascending: true });
+
+  if (error) return console.error('Erro ao carregar equipes:', error);
+
+  selectEquipe.innerHTML = '<option value="">-- Selecione a equipe --</option>';
+
+  if (!equipes || equipes.length === 0) {
+    selectEquipe.innerHTML = '<option value="">Nenhuma equipe cadastrada nesta unidade</option>';
+  } else {
+    equipes.forEach(eq => {
+      selectEquipe.innerHTML += `<option value="${eq.id}">${eq.nome}</option>`;
+    });
+  }
+}
+
+async function carregar_unidades_select_edicao() {
+  const selectUnidade = document.getElementById('edit_unidade_funcionario');
+  if (!selectUnidade) return;
+
+  selectUnidade.innerHTML = '<option value="">Carregando unidades...</option>';
+
+  const { data: unidades, error } = await _supabase
+    .from('unidades')
+    .select('id, nome')
+    .order('nome', { ascending: true });
+
+  if (error) return console.error('Erro ao carregar unidades:', error);
+
+  selectUnidade.innerHTML = '<option value="">-- Selecione a unidade (opcional) --</option>';
+
+  (unidades || []).forEach(u => {
+    selectUnidade.innerHTML += `<option value="${u.id}">${u.nome}</option>`;
+  });
+
+  const unidadeAtualId = funcionario_atual.equipes?.unidade_id || funcionario_atual.equipes?.unidades?.id;
+  selectUnidade.value = unidadeAtualId || '';
+
+  await carregar_equipes_da_unidade_edicao();
+}
+
+async function carregar_equipes_da_unidade_edicao() {
+  const unidadeId = document.getElementById('edit_unidade_funcionario').value;
+  const containerEquipe = document.getElementById('container_equipe_funcionario_edit');
+  const selectEquipe = document.getElementById('edit_equipe_funcionario');
+
+  if (!unidadeId) {
+    containerEquipe.classList.add('oculto');
+    selectEquipe.innerHTML = '<option value="">-- Selecione a equipe --</option>';
+    selectEquipe.value = '';
+    selectEquipe.required = false;
+    return;
+  }
+
+  selectEquipe.innerHTML = '<option value="">Carregando equipes...</option>';
+  containerEquipe.classList.remove('oculto');
+  selectEquipe.required = true;
+
+  const { data: equipes, error } = await _supabase
+    .from('equipes')
+    .select('id, nome')
+    .eq('unidade_id', unidadeId)
+    .order('nome', { ascending: true });
+
+  if (error) return console.error('Erro ao carregar equipes:', error);
+
+  selectEquipe.innerHTML = '<option value="">-- Selecione a equipe --</option>';
+
+  if (!equipes || equipes.length === 0) {
+    selectEquipe.innerHTML = '<option value="">Nenhuma equipe cadastrada nesta unidade</option>';
+  } else {
+    equipes.forEach(eq => {
+      selectEquipe.innerHTML += `<option value="${eq.id}">${eq.nome}</option>`;
+    });
+
+    if (funcionario_atual.equipe_id) {
+      selectEquipe.value = funcionario_atual.equipe_id;
+    }
+  }
+}
+
+async function excluir_funcionario() {
+  if (!funcionario_atual) return;
+  if (!confirm(`Tem certeza que deseja excluir o funcionário "${funcionario_atual.nome}"?`)) return;
+
+  const { error } = await _supabase
+    .from('funcionarios')
+    .delete()
+    .eq('id', funcionario_atual.id);
+
+  if (error) {
+    alert('Erro ao excluir funcionário: ' + error.message);
+  } else {
+    fechar_modal_detalhes();
+    carregar_funcionarios();
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -152,18 +355,54 @@ document.addEventListener('DOMContentLoaded', () => {
       const cargoSelecionado = document.getElementById('novo_cargo_funcionario').value;
       const registro = document.getElementById('novo_registro_funcionario').value;
       const especializacao = document.getElementById('nova_especializacao_funcionario').value;
+      const unidadeId = document.getElementById('novo_unidade_funcionario').value;
+      const equipeId = unidadeId ? (document.getElementById('novo_equipe_funcionario').value || null) : null;
 
       const { error } = await _supabase.from('funcionarios').insert([{
         nome,
         cargo: cargoSelecionado,
         registro_profissional: registro || null,
-        especializacao
+        especializacao,
+        equipe_id: equipeId
       }]);
 
       if (error) {
         alert('Erro ao cadastrar funcionário: ' + error.message);
       } else {
         fechar_modal_cadastro();
+        carregar_funcionarios();
+      }
+    });
+  }
+
+  const formEdicao = document.getElementById('form_edicao_funcionario');
+  if (formEdicao) {
+    formEdicao.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!funcionario_atual) return;
+
+      const nome = document.getElementById('edit_nome_funcionario').value;
+      const cargoSelecionado = document.getElementById('edit_cargo_funcionario').value;
+      const registro = document.getElementById('edit_registro_funcionario').value;
+      const especializacao = document.getElementById('edit_especializacao_funcionario').value;
+      const unidadeId = document.getElementById('edit_unidade_funcionario').value;
+      const equipeId = unidadeId ? (document.getElementById('edit_equipe_funcionario').value || null) : null;
+
+      const { error } = await _supabase
+        .from('funcionarios')
+        .update({
+          nome,
+          cargo: cargoSelecionado,
+          registro_profissional: registro || null,
+          especializacao,
+          equipe_id: equipeId
+        })
+        .eq('id', funcionario_atual.id);
+
+      if (error) {
+        alert('Erro ao atualizar funcionário: ' + error.message);
+      } else {
+        fechar_modal_detalhes();
         carregar_funcionarios();
       }
     });

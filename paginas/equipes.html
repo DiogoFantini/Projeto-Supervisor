@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestão de Equipes</title>
+  <title>Gestão de equipes</title>
   <link rel="stylesheet" href="../css/css_barra_lateral.css">
   <link rel="stylesheet" href="../css/css_equipes.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -20,18 +20,19 @@
           type="text" 
           id="campo_busca_equipe" 
           class="campo-busca" 
-          placeholder="Buscar por nome, descrição ou integrante..." 
+          placeholder="Buscar por nome, descrição, unidade..." 
           oninput="filtrar_equipes()"
         >
-        <button type="button" class="btn-principal" onclick="abrir_modal_cadastro()">+ Adicionar Equipe</button>
+        <button type="button" class="btn-principal" onclick="abrir_modal_cadastro()">+ Adicionar equipe</button>
       </div>
     </div>
 
     <table>
       <thead>
         <tr>
-          <th>Nome da Equipe</th>
+          <th>Nome da equipe</th>
           <th>Descrição</th>
+          <th>Unidade</th>
           <th class="coluna-acoes">Ações</th>
         </tr>
       </thead>
@@ -43,17 +44,22 @@
   <div id="modal_cadastro_equipe" class="modal-overlay oculto">
     <div class="modal-card">
       <span class="modal-fechar" onclick="fechar_modal_cadastro()">&times;</span>
-      <h2>Cadastrar Nova Equipe</h2>
+      <h2>Cadastrar nova equipe</h2>
       <form id="form_cadastro_equipe" class="form-cadastro" style="margin-top: 16px;">
-        <label><strong>Nome da Equipe:</strong></label>
+        <label><strong>Nome da equipe<span class="obrigatorio">*</span></strong></label>
         <input type="text" id="novo_nome_equipe" placeholder="Ex: Equipe Alfa" required>
 
-        <label><strong>Descrição / Propósito:</strong></label>
-        <input type="text" id="nova_descricao_equipe" placeholder="Ex: Manutenção Preventiva" required>
+        <label><strong>Descrição / Propósito<span class="obrigatorio">*</span></strong></label>
+        <input type="text" id="nova_descricao_equipe" placeholder="Ex: Manutenção preventiva" required>
+
+        <label><strong>Unidade vinculada</strong></label>
+        <select id="novo_unidade_equipe">
+          <option value="">-- Selecione a unidade (opcional) --</option>
+        </select>
 
         <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px;">
           <button type="button" style="background-color: #64748b; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="fechar_modal_cadastro()">Cancelar</button>
-          <button type="submit" class="btn-principal">Salvar Equipe</button>
+          <button type="submit" class="btn-principal">Salvar equipe</button>
         </div>
       </form>
     </div>
@@ -64,37 +70,45 @@
     <div class="modal-card">
       <span class="modal-fechar" onclick="fechar_modal_detalhes()">&times;</span>
       
+      <!-- MODO VISUALIZAÇÃO -->
       <div id="modo_visualizacao">
         <h2 id="modal_nome_equipe"></h2>
         <p><strong>Descrição:</strong> <span id="modal_descricao_equipe"></span></p>
+        <p><strong>Unidade vinculada:</strong> <span id="modal_unidade_equipe"></span></p>
         <p><strong>Criada em:</strong> <span id="modal_data_criacao"></span></p>
         
         <hr style="margin: 16px 0; border: 0; border-top: 1px solid #e2e8f0;">
         
-        <h3>Integrantes da Equipe</h3>
+        <h3>Integrantes da equipe</h3>
         <ul id="modal_lista_membros_vis" class="lista-membros"></ul>
         
         <div style="margin-top: 20px; text-align: right;">
-          <button type="button" class="btn-principal" onclick="ativar_modo_edicao()">Editar Equipe</button>
+          <button type="button" class="btn-principal" onclick="ativar_modo_edicao()">Editar equipe</button>
         </div>
       </div>
 
+      <!-- MODO EDIÇÃO -->
       <div id="modo_edicao" class="oculto">
-        <h2>Editar Equipe</h2>
+        <h2>Editar equipe</h2>
         
         <div class="form-edicao">
-          <label><strong>Nome da Equipe:</strong></label>
-          <input type="text" id="edit_nome_equipe">
+          <label><strong>Nome da equipe<span class="obrigatorio">*</span></strong></label>
+          <input type="text" id="edit_nome_equipe" required>
 
-          <label><strong>Descrição:</strong></label>
-          <input type="text" id="edit_descricao_equipe">
+          <label><strong>Descrição<span class="obrigatorio">*</span></strong></label>
+          <input type="text" id="edit_descricao_equipe" required>
+
+          <label><strong>Unidade vinculada</strong></label>
+          <select id="edit_unidade_equipe">
+            <option value="">-- Selecione a unidade (opcional) --</option>
+          </select>
 
           <hr style="margin: 10px 0; border: 0; border-top: 1px solid #e2e8f0;">
 
-          <h3>Gerenciar Integrantes</h3>
+          <h3>Gerenciar integrantes</h3>
           <ul id="modal_lista_membros_edit" class="lista-membros"></ul>
 
-          <label><strong>Vincular Funcionário Registrado:</strong></label>
+          <label><strong>Vincular funcionário registrado</strong></label>
           <div class="grupo-adicionar">
             <select id="select_funcionarios_disponiveis" style="flex: 1;">
               <option value="">Carregando funcionários...</option>
@@ -104,10 +118,10 @@
         </div>
 
         <div class="botoes-edicao">
-          <button type="button" class="btn-perigo" onclick="excluir_equipe()">Excluir Equipe</button>
+          <button type="button" class="btn-perigo" onclick="excluir_equipe()">Excluir equipe</button>
           <div style="display: flex; gap: 8px;">
             <button type="button" style="background-color: #64748b; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="cancelar_edicao()">Cancelar</button>
-            <button type="button" class="btn-principal" onclick="salvar_alteracoes_equipe()">Salvar</button>
+            <button type="button" class="btn-sucesso" onclick="salvar_alteracoes_equipe()">Salvar alterações</button>
           </div>
         </div>
       </div>

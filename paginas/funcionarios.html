@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestão de Funcionários</title>
+  <title>Gestão de funcionários</title>
   <link rel="stylesheet" href="../css/css_barra_lateral.css">
   <link rel="stylesheet" href="../css/css_funcionarios.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -23,7 +23,7 @@
           placeholder="Buscar por nome, cargo, especialização, equipe..." 
           oninput="filtrar_funcionarios()"
         >
-        <button type="button" class="btn-principal" onclick="abrir_modal_cadastro()">+ Adicionar Funcionário</button>
+        <button type="button" class="btn-principal" onclick="abrir_modal_cadastro()">+ Adicionar funcionário</button>
       </div>
     </div>
 
@@ -46,14 +46,14 @@
   <div id="modal_cadastro_funcionario" class="modal-overlay oculto">
     <div class="modal-card">
       <span class="modal-fechar" onclick="fechar_modal_cadastro()">&times;</span>
-      <h2>Cadastrar Novo Funcionário</h2>
+      <h2>Cadastrar novo funcionário</h2>
       <form id="form_cadastro_funcionario" class="form-cadastro" style="margin-top: 16px;">
-        <label><strong>Nome Completo:</strong></label>
+        <label><strong>Nome completo<span class="obrigatorio">*</span></strong></label>
         <input type="text" id="novo_nome_funcionario" placeholder="Ex: João da Silva" required>
 
-        <label><strong>Cargo:</strong></label>
+        <label><strong>Cargo<span class="obrigatorio">*</span></strong></label>
         <select id="novo_cargo_funcionario" required onchange="atualizar_campo_registro()">
-          <option value="">-- Selecione o Cargo --</option>
+          <option value="">-- Selecione o cargo --</option>
           <option value="Médico(a)">Médico(a)</option>
           <option value="Enfermeiro(a)">Enfermeiro(a)</option>
           <option value="Técnico(a) de Enfermagem">Técnico(a) de Enfermagem</option>
@@ -63,37 +63,102 @@
         </select>
 
         <div id="container_registro_profissional" class="oculto form-cadastro" style="padding: 0;">
-          <label><strong id="label_registro_profissional">Registro Profissional:</strong></label>
+          <label><strong id="label_registro_profissional">Registro profissional<span class="obrigatorio">*</span></strong></label>
           <input type="text" id="novo_registro_funcionario" placeholder="Ex: 123456">
         </div>
 
-        <label><strong>Especialização:</strong></label>
-        <input type="text" id="nova_especializacao_funcionario" placeholder="Ex: Pediatria, UTI Adulto, Geral..." required>
+        <label><strong>Especialização<span class="obrigatorio">*</span></strong></label>
+        <input type="text" id="nova_especializacao_funcionario" placeholder="Ex: Pediatria, UTI adulto, geral..." required>
+
+        <label><strong>Unidade</strong></label>
+        <select id="novo_unidade_funcionario" onchange="carregar_equipes_da_unidade()">
+          <option value="">-- Selecione a unidade (opcional) --</option>
+        </select>
+
+        <div id="container_equipe_funcionario" class="oculto form-cadastro" style="padding: 0;">
+          <label><strong>Equipe<span class="obrigatorio">*</span></strong></label>
+          <select id="novo_equipe_funcionario">
+            <option value="">-- Selecione a equipe --</option>
+          </select>
+        </div>
 
         <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px;">
           <button type="button" style="background-color: #64748b; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="fechar_modal_cadastro()">Cancelar</button>
-          <button type="submit" class="btn-principal">Salvar Funcionário</button>
+          <button type="submit" class="btn-principal">Salvar funcionário</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- MODAL DE DETALHES DO FUNCIONÁRIO -->
+  <!-- MODAL DE DETALHES E EDIÇÃO DO FUNCIONÁRIO -->
   <div id="modal_detalhes_funcionario" class="modal-overlay oculto">
     <div class="modal-card">
       <span class="modal-fechar" onclick="fechar_modal_detalhes()">&times;</span>
-      <h2>Detalhes do Funcionário</h2>
-      <div style="margin-top: 20px;">
-        <div class="info-grupo"><strong>Nome:</strong> <span id="detalhe_nome">-</span></div>
-        <div class="info-grupo"><strong>Cargo:</strong> <span id="detalhe_cargo">-</span></div>
-        <div class="info-grupo"><strong>Registro Profissional:</strong> <span id="detalhe_registro">-</span></div>
-        <div class="info-grupo"><strong>Especialização:</strong> <span id="detalhe_especializacao">-</span></div>
-        <div class="info-grupo"><strong>Equipe:</strong> <span id="detalhe_equipe">-</span></div>
-        <div class="info-grupo"><strong>Unidade:</strong> <span id="detalhe_unidade">-</span></div>
+      
+      <!-- MODO VISUALIZAÇÃO -->
+      <div id="modo_visualizacao_funcionario">
+        <h2>Detalhes do funcionário</h2>
+        <div style="margin-top: 20px;">
+          <div class="info-grupo"><strong>Nome:</strong> <span id="detalhe_nome">-</span></div>
+          <div class="info-grupo"><strong>Cargo:</strong> <span id="detalhe_cargo">-</span></div>
+          <div class="info-grupo"><strong>Registro profissional:</strong> <span id="detalhe_registro">-</span></div>
+          <div class="info-grupo"><strong>Especialização:</strong> <span id="detalhe_especializacao">-</span></div>
+          <div class="info-grupo"><strong>Equipe:</strong> <span id="detalhe_equipe">-</span></div>
+          <div class="info-grupo"><strong>Unidade:</strong> <span id="detalhe_unidade">-</span></div>
+        </div>
+        <div style="text-align: right; margin-top: 20px;">
+          <button type="button" class="btn-principal" onclick="ativar_modo_edicao_funcionario()">Editar funcionário</button>
+        </div>
       </div>
-      <div style="text-align: right; margin-top: 20px;">
-        <button type="button" class="btn-principal" onclick="fechar_modal_detalhes()">Fechar</button>
+
+      <!-- MODO EDIÇÃO -->
+      <div id="modo_edicao_funcionario" class="oculto">
+        <h2>Editar funcionário</h2>
+        <form id="form_edicao_funcionario" class="form-cadastro" style="margin-top: 16px;">
+          <label><strong>Nome completo<span class="obrigatorio">*</span></strong></label>
+          <input type="text" id="edit_nome_funcionario" required>
+
+          <label><strong>Cargo<span class="obrigatorio">*</span></strong></label>
+          <select id="edit_cargo_funcionario" required onchange="atualizar_campo_registro_edicao()">
+            <option value="">-- Selecione o cargo --</option>
+            <option value="Médico(a)">Médico(a)</option>
+            <option value="Enfermeiro(a)">Enfermeiro(a)</option>
+            <option value="Técnico(a) de Enfermagem">Técnico(a) de Enfermagem</option>
+            <option value="Auxiliar de Enfermagem">Auxiliar de Enfermagem</option>
+            <option value="Dentista">Dentista</option>
+            <option value="Outro">Outro</option>
+          </select>
+
+          <div id="container_registro_profissional_edit" class="oculto form-cadastro" style="padding: 0;">
+            <label><strong id="label_registro_profissional_edit">Registro profissional<span class="obrigatorio">*</span></strong></label>
+            <input type="text" id="edit_registro_funcionario">
+          </div>
+
+          <label><strong>Especialização<span class="obrigatorio">*</span></strong></label>
+          <input type="text" id="edit_especializacao_funcionario" required>
+
+          <label><strong>Unidade</strong></label>
+          <select id="edit_unidade_funcionario" onchange="carregar_equipes_da_unidade_edicao()">
+            <option value="">-- Selecione a unidade (opcional) --</option>
+          </select>
+
+          <div id="container_equipe_funcionario_edit" class="oculto form-cadastro" style="padding: 0;">
+            <label><strong>Equipe<span class="obrigatorio">*</span></strong></label>
+            <select id="edit_equipe_funcionario">
+              <option value="">-- Selecione a equipe --</option>
+            </select>
+          </div>
+
+          <div style="display: flex; gap: 8px; justify-content: space-between; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+            <button type="button" class="btn-perigo" onclick="excluir_funcionario()">Excluir funcionário</button>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" style="background-color: #64748b; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="cancelar_edicao_funcionario()">Cancelar</button>
+              <button type="submit" class="btn-sucesso">Salvar alterações</button>
+            </div>
+          </div>
+        </form>
       </div>
+
     </div>
   </div>
 

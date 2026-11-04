@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Detalhes da Unidade</title>
+  <title>Detalhes da unidade</title>
   <link rel="stylesheet" href="../css/css_barra_lateral.css">
   <link rel="stylesheet" href="../css/css_unidade_detalhes.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -13,7 +13,7 @@
 <body>
 
   <main class="conteudo-principal">
-    <a href="unidades.html" class="btn-voltar">← Voltar para Unidades</a>
+    <a href="unidades.html" class="btn-voltar">← Voltar para unidades</a>
     
     <div class="cabecalho-pagina">
       <h1 id="titulo_unidade">Carregando...</h1>
@@ -25,19 +25,56 @@
           placeholder="Buscar equipe nesta unidade..." 
           oninput="filtrar_equipes()"
         >
+        <button type="button" class="btn-principal" onclick="abrir_modal_vincular_equipe()">+ Vincular equipe à unidade</button>
+        <button type="button" id="btn_modo_desvincular" class="btn-perigo" onclick="alternar_modo_desvincular()">Desvincular equipe</button>
       </div>
     </div>
 
     <table>
       <thead>
         <tr>
-          <th>Nome da Equipe</th>
+          <th>Nome da equipe</th>
           <th>Descrição</th>
+          <th id="coluna_acoes_cabecalho" class="coluna-remocao oculto">Ação</th>
         </tr>
       </thead>
       <tbody id="tabela_equipes_unidade"></tbody>
     </table>
   </main>
+
+  <!-- MODAL DE VINCULAR EQUIPE -->
+  <div id="modal_vincular_equipe_unidade" class="modal-overlay oculto">
+    <div class="modal-card">
+      <span class="modal-fechar" onclick="fechar_modal_vincular_equipe()">&times;</span>
+      <h2>Vincular equipe a esta unidade</h2>
+      <form id="form_vincular_equipe_unidade" class="form-cadastro" style="margin-top: 16px;">
+        <label><strong>Selecione a equipe registrada<span class="obrigatorio">*</span></strong></label>
+        <select id="select_equipe_disponivel" required>
+          <option value="">Carregando equipes...</option>
+        </select>
+
+        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px;">
+          <button type="button" style="background-color: #64748b; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="fechar_modal_vincular_equipe()">Cancelar</button>
+          <button type="submit" class="btn-principal">Vincular equipe</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIRMAÇÃO DE DESVÍNCULO DE EQUIPE -->
+  <div id="modal_confirmar_desvinculo_equipe" class="modal-overlay oculto">
+    <div class="modal-card">
+      <span class="modal-fechar" onclick="fechar_modal_confirmar_desvinculo()">&times;</span>
+      <h2>Confirmar desvínculo</h2>
+      <p style="margin-top: 16px; color: #334155;">
+        Tem certeza que deseja desvincular a equipe <strong id="nome_equipe_desvincular"></strong> desta unidade?
+      </p>
+      <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px;">
+        <button type="button" style="background-color: #64748b; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="fechar_modal_confirmar_desvinculo()">Cancelar</button>
+        <button type="button" class="btn-perigo" onclick="executar_desvinculo_equipe()">Confirmar desvínculo</button>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>

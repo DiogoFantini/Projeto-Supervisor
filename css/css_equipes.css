@@ -22,6 +22,7 @@ h1, h2, h3 {
   border-radius: 6px;
   font-size: 14px;
   width: 280px;
+  background-color: #ffffff;
 }
 
 .campo-busca:focus {
@@ -38,6 +39,7 @@ h1, h2, h3 {
   font-weight: bold;
   cursor: pointer;
   white-space: nowrap;
+  transition: background-color 0.2s ease;
 }
 
 .btn-principal:hover {
@@ -46,6 +48,13 @@ h1, h2, h3 {
 
 .btn-perigo {
   background-color: #ef4444;
+  color: #ffffff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 .btn-perigo:hover {
@@ -95,6 +104,7 @@ th {
   color: #0369a1;
 }
 
+/* Modais e Formulários */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -138,16 +148,36 @@ th {
   display: none !important;
 }
 
-.form-cadastro, .form-edicao {
+.form-cadastro, 
+.form-edicao {
   display: grid;
   gap: 12px;
 }
 
-.form-cadastro input, .form-edicao input, .form-edicao select {
+.form-cadastro label, 
+.form-edicao label {
+  font-size: 14px;
+  color: #334155;
+}
+
+.form-cadastro input, 
+.form-cadastro select, 
+.form-edicao input, 
+.form-edicao select {
+  width: 100%;
   padding: 12px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 14px;
+  box-sizing: border-box;
+}
+
+.form-cadastro input:focus, 
+.form-cadastro select:focus, 
+.form-edicao input:focus, 
+.form-edicao select:focus {
+  outline: none;
+  border-color: #0284c7;
 }
 
 .lista-membros {
@@ -174,6 +204,11 @@ th {
   border-radius: 4px;
   cursor: pointer;
   border: none;
+  transition: background-color 0.2s ease;
+}
+
+.btn-remover-membro:hover {
+  background-color: #dc2626;
 }
 
 .grupo-adicionar {
