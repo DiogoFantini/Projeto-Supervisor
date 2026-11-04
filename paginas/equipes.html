@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestão de Equipes</title>
+  <link rel="stylesheet" href="../css/css_barra_lateral.css">
+  <link rel="stylesheet" href="../css/css_equipes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/barra_lateral.js"></script>
+</head>
+<body>
+
+  <main class="conteudo-principal">
+    <h1>Painel de Equipes</h1>
+
+    <div class="card">
+      <h2>Cadastrar Nova Equipe</h2>
+      <form id="formEquipe">
+        <input type="text" id="nomeEquipe" placeholder="Nome da Equipe" required>
+        <input type="text" id="descricaoEquipe" placeholder="Descrição ou Propósito" required>
+        <button type="submit">Salvar Equipe</button>
+      </form>
+    </div>
+
+    <h2>Lista de Equipes</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Nome da Equipe</th>
+          <th>Descrição</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaEquipes"></tbody>
+    </table>
+  </main>
+
+  <div id="modalEquipe" class="modal-overlay oculto">
+    <div class="modal-card">
+      <span class="modal-fechar" onclick="fecharModal()">&times;</span>
+      
+      <div id="modoVisualizacao">
+        <h2 id="modalNomeEquipe"></h2>
+        <p><strong>Descrição:</strong> <span id="modalDescricaoEquipe"></span></p>
+        <p><strong>Criada em:</strong> <span id="modalDataCriacao"></span></p>
+        
+        <hr style="margin: 16px 0; border: 0; border-top: 1px solid #e2e8f0;">
+        
+        <h3>Integrantes da Equipe</h3>
+        <ul id="modalListaMembrosVis" class="lista-membros"></ul>
+        
+        <div style="margin-top: 20px; text-align: right;">
+          <button type="button" onclick="ativarModoEdicao()">Editar Equipe</button>
+        </div>
+      </div>
+
+      <div id="modoEdicao" class="oculto">
+        <h2>Editar Equipe</h2>
+        
+        <div class="form-edicao">
+          <label><strong>Nome da Equipe:</strong></label>
+          <input type="text" id="editNomeEquipe">
+
+          <label><strong>Descrição:</strong></label>
+          <input type="text" id="editDescricaoEquipe">
+
+          <hr style="margin: 10px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+          <h3>Gerenciar Integrantes</h3>
+          <ul id="modalListaMembrosEdit" class="lista-membros"></ul>
+
+          <label><strong>Vincular Funcionário Registrado:</strong></label>
+          <div class="grupo-adicionar">
+            <select id="selectFuncionariosDisponiveis" style="flex: 1;">
+              <option value="">Carregando funcionários...</option>
+            </select>
+            <button type="button" onclick="adicionarMembroEquipe()" style="background-color: #16a34a;">Adicionar</button>
+          </div>
+        </div>
+
+        <div class="botoes-edicao">
+          <button type="button" class="btn-perigo" onclick="excluirEquipe()">Excluir Equipe</button>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" style="background-color: #64748b;" onclick="cancelarEdicao()">Cancelar</button>
+            <button type="button" onclick="salvarAlteracoesEquipe()">Salvar</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://tnlsqmrluxugwialhrej.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_QaX1w_iFxZold_RnCkHtSA_z6hAbM-2';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let equipeAtual = null;
+    let membrosAdicionar = new Set();
+    let membrosRemover = new Set();
+    let listaFuncionariosTodos = [];
+
+    async function verificarAutenticacao() {
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (!session) {
+        window.location.href = 'login.html';
+      } else {
+        carregarEquipes();
+      }
+    }
+
+    async function carregarEquipes() {
+      const { data, error } = await _supabase
+        .from('equipes')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) return console.error('Erro ao buscar equipes:', error);
+
+      const tbody = document.getElementById('tabelaEquipes');
+      tbody.innerHTML = '';
+      data.forEach(eq => {
+        tbody.innerHTML += `
+          <tr>
+            <td>
+              <span class="nome-equipe-link" onclick='abrirModalEquipe(${JSON.stringify(eq)})'>
+                ${eq.nome}
+              </span>
+            </td>
+            <td>${eq.descricao || '-'}</td>
+          </tr>
+        `;
+      });
+    }
+
+    async function abrirModalEquipe(equipe) {
+      equipeAtual = equipe;
+      document.getElementById('modalNomeEquipe').innerText = equipe.nome;
+      document.getElementById('modalDescricaoEquipe').innerText = equipe.descricao || 'Sem descrição cadastrada.';
+      document.getElementById('modalDataCriacao').innerText = new Date(equipe.created_at).toLocaleDateString('pt-BR');
+
+      document.getElementById('modoVisualizacao').classList.remove('oculto');
+      document.getElementById('modoEdicao').classList.add('oculto');
+      document.getElementById('modalEquipe').classList.remove('oculto');
+
+      await carregarMembrosVisualizacao();
+    }
+
+    async function carregarMembrosVisualizacao() {
+      const lista = document.getElementById('modalListaMembrosVis');
+      lista.innerHTML = '<li>Carregando...</li>';
+
+      const { data: membros } = await _supabase
+        .from('funcionarios')
+        .select('nome, cargo')
+        .eq('equipe_id', equipeAtual.id);
+
+      lista.innerHTML = '';
+      if (!membros || membros.length === 0) {
+        lista.innerHTML = '<li style="background: none; padding: 0;">Nenhum funcionário nesta equipe.</li>';
+      } else {
+        membros.forEach(m => {
+          lista.innerHTML += `<li><span><strong>${m.nome}</strong> (${m.cargo})</span></li>`;
+        });
+      }
+    }
+
+    async function ativarModoEdicao() {
+      document.getElementById('editNomeEquipe').value = equipeAtual.nome;
+      document.getElementById('editDescricaoEquipe').value = equipeAtual.descricao || '';
+
+      membrosAdicionar.clear();
+      membrosRemover.clear();
+
+      document.getElementById('modoVisualizacao').classList.add('oculto');
+      document.getElementById('modoEdicao').classList.remove('oculto');
+
+      const { data: funcionarios } = await _supabase
+        .from('funcionarios')
+        .select('id, nome, cargo, equipe_id');
+
+      listaFuncionariosTodos = funcionarios || [];
+      renderizarEditoresMembros();
+    }
+
+    function renderizarEditoresMembros() {
+      const lista = document.getElementById('modalListaMembrosEdit');
+      const select = document.getElementById('selectFuncionariosDisponiveis');
+
+      const membrosAtuais = listaFuncionariosTodos.filter(f => 
+        (f.equipe_id === equipeAtual.id || membrosAdicionar.has(f.id)) && !membrosRemover.has(f.id)
+      );
+
+      const disponiveis = listaFuncionariosTodos.filter(f => 
+        (!f.equipe_id && !membrosAdicionar.has(f.id)) || membrosRemover.has(f.id)
+      );
+
+      lista.innerHTML = '';
+      if (membrosAtuais.length === 0) {
+        lista.innerHTML = '<li style="background: none; padding: 0;">Nenhum funcionário nesta equipe.</li>';
+      } else {
+        membrosAtuais.forEach(m => {
+          lista.innerHTML += `
+            <li>
+              <span><strong>${m.nome}</strong> - ${m.cargo}</span>
+              <button class="btn-remover-membro" onclick="marcarRemoverMembro('${m.id}')">Remover</button>
+            </li>
+          `;
+        });
+      }
+
+      select.innerHTML = '<option value="">-- Selecione um funcionário --</option>';
+      if (disponiveis.length > 0) {
+        disponiveis.forEach(f => {
+          select.innerHTML += `<option value="${f.id}">${f.nome} (${f.cargo})</option>`;
+        });
+      } else {
+        select.innerHTML = '<option value="">Todos os funcionários já têm equipe</option>';
+      }
+    }
+
+    function adicionarMembroEquipe() {
+      const select = document.getElementById('selectFuncionariosDisponiveis');
+      const id = select.value;
+      if (!id) return alert('Selecione um funcionário da lista.');
+
+      if (membrosRemover.has(id)) {
+        membrosRemover.delete(id);
+      } else {
+        membrosAdicionar.add(id);
+      }
+      renderizarEditoresMembros();
+    }
+
+    function marcarRemoverMembro(id) {
+      if (membrosAdicionar.has(id)) {
+        membrosAdicionar.delete(id);
+      } else {
+        membrosRemover.add(id);
+      }
+      renderizarEditoresMembros();
+    }
+
+    async function salvarAlteracoesEquipe() {
+      const novoNome = document.getElementById('editNomeEquipe').value;
+      const novaDescricao = document.getElementById('editDescricaoEquipe').value;
+
+      if (!novoNome) return alert('O nome da equipe é obrigatório.');
+
+      const { error: errEquipe } = await _supabase
+        .from('equipes')
+        .update({ nome: novoNome, descricao: novaDescricao })
+        .eq('id', equipeAtual.id);
+
+      if (errEquipe) return alert('Erro ao atualizar equipe: ' + errEquipe.message);
+
+      if (membrosAdicionar.size > 0) {
+        await _supabase
+          .from('funcionarios')
+          .update({ equipe_id: equipeAtual.id })
+          .in('id', Array.from(membrosAdicionar));
+      }
+
+      if (membrosRemover.size > 0) {
+        await _supabase
+          .from('funcionarios')
+          .update({ equipe_id: null })
+          .in('id', Array.from(membrosRemover));
+      }
+
+      fecharModal();
+      carregarEquipes();
+    }
+
+    async function excluirEquipe() {
+      if (!confirm(`Tem certeza que deseja excluir a equipe "${equipeAtual.nome}"?`)) return;
+
+      const { error } = await _supabase
+        .from('equipes')
+        .delete()
+        .eq('id', equipeAtual.id);
+
+      if (error) {
+        alert('Erro ao excluir equipe: ' + error.message);
+      } else {
+        fecharModal();
+        carregarEquipes();
+      }
+    }
+
+    function cancelarEdicao() {
+      membrosAdicionar.clear();
+      membrosRemover.clear();
+      document.getElementById('modoEdicao').classList.add('oculto');
+      document.getElementById('modoVisualizacao').classList.remove('oculto');
+      carregarMembrosVisualizacao();
+    }
+
+    function fecharModal() {
+      document.getElementById('modalEquipe').classList.add('oculto');
+      membrosAdicionar.clear();
+      membrosRemover.clear();
+      equipeAtual = null;
+    }
+
+    window.onclick = function(event) {
+      const modal = document.getElementById('modalEquipe');
+      if (event.target === modal) fecharModal();
+    };
+
+    document.getElementById('formEquipe').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nome = document.getElementById('nomeEquipe').value;
+      const descricao = document.getElementById('descricaoEquipe').value;
+
+      const { error } = await _supabase.from('equipes').insert([{ nome, descricao }]);
+      
+      if (error) {
+        alert('Erro ao cadastrar equipe: ' + error.message);
+      } else {
+        e.target.reset();
+        carregarEquipes();
+      }
+    });
+
+    verificarAutenticacao();
+  </script>
+</body>
+</html>

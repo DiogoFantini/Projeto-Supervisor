@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestão de Funcionários</title>
+  <link rel="stylesheet" href="../css/css_barra_lateral.css">
+  <link rel="stylesheet" href="../css/css_funcionarios.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/barra_lateral.js"></script>
+</head>
+<body>
+
+  <main class="conteudo-principal">
+    <h1>Painel de Funcionários</h1>
+
+    <div class="card">
+      <h2>Cadastrar Novo Funcionário</h2>
+      <form id="formFuncionario">
+        <input type="text" id="nome" placeholder="Nome Completo" required>
+        <input type="email" id="email" placeholder="E-mail" required>
+        <input type="text" id="cargo" placeholder="Cargo" required>
+        <input type="text" id="departamento" placeholder="Departamento" required>
+        <button type="submit">Salvar Funcionário</button>
+      </form>
+    </div>
+
+    <h2>Lista de Funcionários</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>Cargo</th>
+          <th>Departamento</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaFuncionarios"></tbody>
+    </table>
+  </main>
+
+  <script>
+    const SUPABASE_URL = 'https://tnlsqmrluxugwialhrej.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_QaX1w_iFxZold_RnCkHtSA_z6hAbM-2';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function verificarAutenticacao() {
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (!session) {
+        window.location.href = 'login.html';
+      } else {
+        carregarFuncionarios();
+      }
+    }
+
+    async function carregarFuncionarios() {
+      const { data, error } = await _supabase.from('funcionarios').select('*').order('created_at', { ascending: false });
+      if (error) return console.error('Erro ao buscar dados:', error);
+
+      const tbody = document.getElementById('tabelaFuncionarios');
+      tbody.innerHTML = '';
+      data.forEach(f => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${f.nome}</td>
+            <td>${f.email}</td>
+            <td>${f.cargo}</td>
+            <td>${f.departamento}</td>
+          </tr>
+        `;
+      });
+    }
+
+    document.getElementById('formFuncionario').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nome = document.getElementById('nome').value;
+      const email = document.getElementById('email').value;
+      const cargo = document.getElementById('cargo').value;
+      const departamento = document.getElementById('departamento').value;
+
+      const { error } = await _supabase.from('funcionarios').insert([{ nome, email, cargo, departamento }]);
+      
+      if (error) {
+        alert('Erro ao cadastrar: ' + error.message);
+      } else {
+        e.target.reset();
+        carregarFuncionarios();
+      }
+    });
+
+    verificarAutenticacao();
+  </script>
+</body>
+</html>

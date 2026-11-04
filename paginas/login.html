@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Gestão de Funcionários</title>
+  <link rel="stylesheet" href="../css/css_login.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <div class="card">
+    <h2>Entrar no Sistema</h2>
+    <form id="formLogin">
+      <input type="email" id="loginEmail" placeholder="Seu E-mail" required>
+      <input type="password" id="loginSenha" placeholder="Sua Senha" required>
+      <button type="submit">Entrar</button>
+    </form>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://tnlsqmrluxugwialhrej.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_QaX1w_iFxZold_RnCkHtSA_z6hAbM-2';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function checarSessao() {
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (session) {
+        window.location.href = 'unidades.html';
+      }
+    }
+
+    document.getElementById('formLogin').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginSenha').value;
+
+      const { error } = await _supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        alert('Erro ao entrar: ' + error.message);
+      } else {
+        window.location.href = 'unidades.html';
+      }
+    });
+
+    checarSessao();
+  </script>
+</body>
+</html>
