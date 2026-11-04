@@ -8,87 +8,94 @@
   <link rel="stylesheet" href="../css/css_funcionarios.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/barra_lateral.js"></script>
+  <script src="../js/cadastrar_funcionario.js" defer></script>
 </head>
 <body>
 
   <main class="conteudo-principal">
-    <h1>Painel de Funcionários</h1>
-
-    <div class="card">
-      <h2>Cadastrar Novo Funcionário</h2>
-      <form id="formFuncionario">
-        <input type="text" id="nome" placeholder="Nome Completo" required>
-        <input type="email" id="email" placeholder="E-mail" required>
-        <input type="text" id="cargo" placeholder="Cargo" required>
-        <input type="text" id="departamento" placeholder="Departamento" required>
-        <button type="submit">Salvar Funcionário</button>
-      </form>
+    <div class="cabecalho-pagina">
+      <h1>Funcionários</h1>
+      <div class="acoes-cabecalho">
+        <input 
+          type="text" 
+          id="campo_busca_funcionario" 
+          class="campo-busca" 
+          placeholder="Buscar por nome, cargo, especialização, equipe..." 
+          oninput="filtrar_funcionarios()"
+        >
+        <button type="button" class="btn-principal" onclick="abrir_modal_cadastro()">+ Adicionar Funcionário</button>
+      </div>
     </div>
 
-    <h2>Lista de Funcionários</h2>
     <table>
       <thead>
         <tr>
           <th>Nome</th>
-          <th>E-mail</th>
           <th>Cargo</th>
-          <th>Departamento</th>
+          <th>Especialização</th>
+          <th>Equipe</th>
+          <th>Unidade</th>
+          <th class="coluna-acoes">Ações</th>
         </tr>
       </thead>
-      <tbody id="tabelaFuncionarios"></tbody>
+      <tbody id="tabela_funcionarios"></tbody>
     </table>
   </main>
 
-  <script>
-    const SUPABASE_URL = 'https://tnlsqmrluxugwialhrej.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_QaX1w_iFxZold_RnCkHtSA_z6hAbM-2';
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  <!-- MODAL DE CADASTRO DE NOVO FUNCIONÁRIO -->
+  <div id="modal_cadastro_funcionario" class="modal-overlay oculto">
+    <div class="modal-card">
+      <span class="modal-fechar" onclick="fechar_modal_cadastro()">&times;</span>
+      <h2>Cadastrar Novo Funcionário</h2>
+      <form id="form_cadastro_funcionario" class="form-cadastro" style="margin-top: 16px;">
+        <label><strong>Nome Completo:</strong></label>
+        <input type="text" id="novo_nome_funcionario" placeholder="Ex: João da Silva" required>
 
-    async function verificarAutenticacao() {
-      const { data: { session } } = await _supabase.auth.getSession();
-      if (!session) {
-        window.location.href = 'login.html';
-      } else {
-        carregarFuncionarios();
-      }
-    }
+        <label><strong>Cargo:</strong></label>
+        <select id="novo_cargo_funcionario" required onchange="atualizar_campo_registro()">
+          <option value="">-- Selecione o Cargo --</option>
+          <option value="Médico(a)">Médico(a)</option>
+          <option value="Enfermeiro(a)">Enfermeiro(a)</option>
+          <option value="Técnico(a) de Enfermagem">Técnico(a) de Enfermagem</option>
+          <option value="Auxiliar de Enfermagem">Auxiliar de Enfermagem</option>
+          <option value="Dentista">Dentista</option>
+          <option value="Outro">Outro</option>
+        </select>
 
-    async function carregarFuncionarios() {
-      const { data, error } = await _supabase.from('funcionarios').select('*').order('created_at', { ascending: false });
-      if (error) return console.error('Erro ao buscar dados:', error);
+        <div id="container_registro_profissional" class="oculto form-cadastro" style="padding: 0;">
+          <label><strong id="label_registro_profissional">Registro Profissional:</strong></label>
+          <input type="text" id="novo_registro_funcionario" placeholder="Ex: 123456">
+        </div>
 
-      const tbody = document.getElementById('tabelaFuncionarios');
-      tbody.innerHTML = '';
-      data.forEach(f => {
-        tbody.innerHTML += `
-          <tr>
-            <td>${f.nome}</td>
-            <td>${f.email}</td>
-            <td>${f.cargo}</td>
-            <td>${f.departamento}</td>
-          </tr>
-        `;
-      });
-    }
+        <label><strong>Especialização:</strong></label>
+        <input type="text" id="nova_especializacao_funcionario" placeholder="Ex: Pediatria, UTI Adulto, Geral..." required>
 
-    document.getElementById('formFuncionario').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const nome = document.getElementById('nome').value;
-      const email = document.getElementById('email').value;
-      const cargo = document.getElementById('cargo').value;
-      const departamento = document.getElementById('departamento').value;
+        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px;">
+          <button type="button" style="background-color: #64748b; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="fechar_modal_cadastro()">Cancelar</button>
+          <button type="submit" class="btn-principal">Salvar Funcionário</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-      const { error } = await _supabase.from('funcionarios').insert([{ nome, email, cargo, departamento }]);
-      
-      if (error) {
-        alert('Erro ao cadastrar: ' + error.message);
-      } else {
-        e.target.reset();
-        carregarFuncionarios();
-      }
-    });
+  <!-- MODAL DE DETALHES DO FUNCIONÁRIO -->
+  <div id="modal_detalhes_funcionario" class="modal-overlay oculto">
+    <div class="modal-card">
+      <span class="modal-fechar" onclick="fechar_modal_detalhes()">&times;</span>
+      <h2>Detalhes do Funcionário</h2>
+      <div style="margin-top: 20px;">
+        <div class="info-grupo"><strong>Nome:</strong> <span id="detalhe_nome">-</span></div>
+        <div class="info-grupo"><strong>Cargo:</strong> <span id="detalhe_cargo">-</span></div>
+        <div class="info-grupo"><strong>Registro Profissional:</strong> <span id="detalhe_registro">-</span></div>
+        <div class="info-grupo"><strong>Especialização:</strong> <span id="detalhe_especializacao">-</span></div>
+        <div class="info-grupo"><strong>Equipe:</strong> <span id="detalhe_equipe">-</span></div>
+        <div class="info-grupo"><strong>Unidade:</strong> <span id="detalhe_unidade">-</span></div>
+      </div>
+      <div style="text-align: right; margin-top: 20px;">
+        <button type="button" class="btn-principal" onclick="fechar_modal_detalhes()">Fechar</button>
+      </div>
+    </div>
+  </div>
 
-    verificarAutenticacao();
-  </script>
 </body>
 </html>

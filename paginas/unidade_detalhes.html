@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalhes da Unidade</title>
+  <link rel="stylesheet" href="../css/css_barra_lateral.css">
+  <link rel="stylesheet" href="../css/css_unidade_detalhes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/barra_lateral.js"></script>
+  <script src="../js/unidade_detalhes.js" defer></script>
+</head>
+<body>
+
+  <main class="conteudo-principal">
+    <a href="unidades.html" class="btn-voltar">← Voltar para Unidades</a>
+    
+    <div class="cabecalho-pagina">
+      <h1 id="titulo_unidade">Carregando...</h1>
+      <div class="acoes-cabecalho">
+        <input 
+          type="text" 
+          id="campo_busca_equipe" 
+          class="campo-busca" 
+          placeholder="Buscar equipe nesta unidade..." 
+          oninput="filtrar_equipes()"
+        >
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nome da Equipe</th>
+          <th>Descrição</th>
+        </tr>
+      </thead>
+      <tbody id="tabela_equipes_unidade"></tbody>
+    </table>
+  </main>
+
+</body>
+</html>

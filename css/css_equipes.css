@@ -1,37 +1,46 @@
 h1, h2, h3 {
   color: #1e293b;
-  margin-top: 0;
+  margin: 0;
 }
 
-.card {
-  background-color: #ffffff;
-  padding: 24px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+.cabecalho-pagina {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 24px;
 }
 
-form, .form-edicao {
-  display: grid;
+.acoes-cabecalho {
+  display: flex;
   gap: 12px;
+  align-items: center;
 }
 
-input, select, button {
-  padding: 12px;
+.campo-busca {
+  padding: 10px 14px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 14px;
+  width: 280px;
 }
 
-button {
+.campo-busca:focus {
+  outline: none;
+  border-color: #0284c7;
+}
+
+.btn-principal {
   background-color: #0284c7;
   color: #ffffff;
   border: none;
-  cursor: pointer;
+  padding: 10px 16px;
+  border-radius: 6px;
   font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
-button:hover {
+.btn-principal:hover {
   background-color: #0369a1;
 }
 
@@ -54,7 +63,7 @@ table {
 
 th, td {
   border-bottom: 1px solid #e2e8f0;
-  padding: 12px;
+  padding: 14px 16px;
   text-align: left;
 }
 
@@ -63,14 +72,26 @@ th {
   font-weight: 600;
 }
 
-.nome-equipe-link {
-  color: #0284c7;
-  cursor: pointer;
-  text-decoration: underline;
-  font-weight: bold;
+.coluna-acoes {
+  text-align: center;
+  width: 70px;
 }
 
-.nome-equipe-link:hover {
+.btn-olho {
+  background: transparent;
+  border: none;
+  color: #0284c7;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-olho:hover {
+  background-color: #e0f2fe;
   color: #0369a1;
 }
 
@@ -115,6 +136,18 @@ th {
 
 .oculto {
   display: none !important;
+}
+
+.form-cadastro, .form-edicao {
+  display: grid;
+  gap: 12px;
+}
+
+.form-cadastro input, .form-edicao input, .form-edicao select {
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
 }
 
 .lista-membros {

@@ -8,22 +8,25 @@
   <link rel="stylesheet" href="../css/css_unidades.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/barra_lateral.js"></script>
+  <script src="../js/cadastrar_unidade.js" defer></script>
 </head>
 <body>
 
   <main class="conteudo-principal">
-    <h1>Painel de Unidades</h1>
-
-    <div class="card">
-      <h2>Cadastrar Nova Unidade</h2>
-      <form id="formUnidade">
-        <input type="text" id="nomeUnidade" placeholder="Nome da Unidade" required>
-        <input type="text" id="enderecoUnidade" placeholder="Endereço Completo" required>
-        <button type="submit">Salvar Unidade</button>
-      </form>
+    <div class="cabecalho-pagina">
+      <h1>Unidades</h1>
+      <div class="acoes-cabecalho">
+        <input 
+          type="text" 
+          id="campo_busca_unidade" 
+          class="campo-busca" 
+          placeholder="Buscar por nome, endereço ou equipe..." 
+          oninput="filtrar_unidades()"
+        >
+        <button type="button" class="btn-principal" onclick="abrir_modal_cadastro()">+ Adicionar Unidade</button>
+      </div>
     </div>
 
-    <h2>Lista de Unidades</h2>
     <table>
       <thead>
         <tr>
@@ -31,299 +34,29 @@
           <th>Endereço</th>
         </tr>
       </thead>
-      <tbody id="tabelaUnidades"></tbody>
+      <tbody id="tabela_unidades"></tbody>
     </table>
   </main>
 
-  <div id="modalUnidade" class="modal-overlay oculto">
+  <!-- MODAL DE CADASTRO DE NOVA UNIDADE -->
+  <div id="modal_cadastro_unidade" class="modal-overlay oculto">
     <div class="modal-card">
-      <span class="modal-fechar" onclick="fecharModal()">&times;</span>
-      
-      <div id="modoVisualizacao">
-        <h2 id="modalNomeUnidade"></h2>
-        <p><strong>Endereço:</strong> <span id="modalEnderecoUnidade"></span></p>
-        <p><strong>Criada em:</strong> <span id="modalDataCriacao"></span></p>
-        
-        <hr style="margin: 16px 0; border: 0; border-top: 1px solid #e2e8f0;">
-        
-        <h3>Equipes Alocadas</h3>
-        <ul id="modalListaEquipesVis" class="lista-itens"></ul>
-        
-        <div style="margin-top: 20px; text-align: right;">
-          <button type="button" onclick="ativarModoEdicao()">Editar Unidade</button>
+      <span class="modal-fechar" onclick="fechar_modal_cadastro()">&times;</span>
+      <h2>Cadastrar Nova Unidade</h2>
+      <form id="form_cadastro_unidade" class="form-cadastro" style="margin-top: 16px;">
+        <label><strong>Nome da Unidade:</strong></label>
+        <input type="text" id="novo_nome_unidade" placeholder="Ex: Unidade Central" required>
+
+        <label><strong>Endereço Completo:</strong></label>
+        <input type="text" id="novo_endereco_unidade" placeholder="Ex: Av. Brasil, 1000" required>
+
+        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px;">
+          <button type="button" style="background-color: #64748b; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="fechar_modal_cadastro()">Cancelar</button>
+          <button type="submit" class="btn-principal">Salvar Unidade</button>
         </div>
-      </div>
-
-      <div id="modoEdicao" class="oculto">
-        <h2>Editar Unidade</h2>
-        
-        <div class="form-edicao">
-          <label><strong>Nome da Unidade:</strong></label>
-          <input type="text" id="editNomeUnidade">
-
-          <label><strong>Endereço:</strong></label>
-          <input type="text" id="editEnderecoUnidade">
-
-          <hr style="margin: 10px 0; border: 0; border-top: 1px solid #e2e8f0;">
-
-          <h3>Gerenciar Equipes da Unidade</h3>
-          <ul id="modalListaEquipesEdit" class="lista-itens"></ul>
-
-          <label><strong>Vincular Equipe Existente:</strong></label>
-          <div class="grupo-adicionar">
-            <select id="selectEquipesDisponiveis" style="flex: 1;">
-              <option value="">Carregando equipes...</option>
-            </select>
-            <button type="button" onclick="adicionarEquipeUnidade()" style="background-color: #16a34a;">Adicionar</button>
-          </div>
-        </div>
-
-        <div class="botoes-edicao">
-          <button type="button" class="btn-perigo" onclick="excluirUnidade()">Excluir Unidade</button>
-          <div style="display: flex; gap: 8px;">
-            <button type="button" style="background-color: #64748b;" onclick="cancelarEdicao()">Cancelar</button>
-            <button type="button" onclick="salvarAlteracoesUnidade()">Salvar</button>
-          </div>
-        </div>
-      </div>
-
+      </form>
     </div>
   </div>
 
-  <script>
-    const SUPABASE_URL = 'https://tnlsqmrluxugwialhrej.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_QaX1w_iFxZold_RnCkHtSA_z6hAbM-2';
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    let unidadeAtual = null;
-    let equipesAdicionar = new Set();
-    let equipesRemover = new Set();
-    let listaEquipesTodas = [];
-
-    async function verificarAutenticacao() {
-      const { data: { session } } = await _supabase.auth.getSession();
-      if (!session) {
-        window.location.href = 'login.html';
-      } else {
-        carregarUnidades();
-      }
-    }
-
-    async function carregarUnidades() {
-      const { data, error } = await _supabase
-        .from('unidades')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) return console.error('Erro ao buscar unidades:', error);
-
-      const tbody = document.getElementById('tabelaUnidades');
-      tbody.innerHTML = '';
-      data.forEach(u => {
-        tbody.innerHTML += `
-          <tr>
-            <td>
-              <span class="nome-unidade-link" onclick='abrirModalUnidade(${JSON.stringify(u)})'>
-                ${u.nome}
-              </span>
-            </td>
-            <td>${u.endereco}</td>
-          </tr>
-        `;
-      });
-    }
-
-    async function abrirModalUnidade(unidade) {
-      unidadeAtual = unidade;
-      document.getElementById('modalNomeUnidade').innerText = unidade.nome;
-      document.getElementById('modalEnderecoUnidade').innerText = unidade.endereco;
-      document.getElementById('modalDataCriacao').innerText = new Date(unidade.created_at).toLocaleDateString('pt-BR');
-
-      document.getElementById('modoVisualizacao').classList.remove('oculto');
-      document.getElementById('modoEdicao').classList.add('oculto');
-      document.getElementById('modalUnidade').classList.remove('oculto');
-
-      await carregarEquipesVisualizacao();
-    }
-
-    async function carregarEquipesVisualizacao() {
-      const lista = document.getElementById('modalListaEquipesVis');
-      lista.innerHTML = '<li>Carregando...</li>';
-
-      const { data: equipes } = await _supabase
-        .from('equipes')
-        .select('nome, descricao')
-        .eq('unidade_id', unidadeAtual.id);
-
-      lista.innerHTML = '';
-      if (!equipes || equipes.length === 0) {
-        lista.innerHTML = '<li style="background: none; padding: 0;">Nenhuma equipe alocada nesta unidade.</li>';
-      } else {
-        equipes.forEach(eq => {
-          lista.innerHTML += `<li><span><strong>${eq.nome}</strong> ${eq.descricao ? '(' + eq.descricao + ')' : ''}</span></li>`;
-        });
-      }
-    }
-
-    async function ativarModoEdicao() {
-      document.getElementById('editNomeUnidade').value = unidadeAtual.nome;
-      document.getElementById('editEnderecoUnidade').value = unidadeAtual.endereco;
-
-      equipesAdicionar.clear();
-      equipesRemover.clear();
-
-      document.getElementById('modoVisualizacao').classList.add('oculto');
-      document.getElementById('modoEdicao').classList.remove('oculto');
-
-      const { data: equipes } = await _supabase
-        .from('equipes')
-        .select('id, nome, descricao, unidade_id');
-
-      listaEquipesTodas = equipes || [];
-      renderizarEditoresEquipes();
-    }
-
-    function renderizarEditoresEquipes() {
-      const lista = document.getElementById('modalListaEquipesEdit');
-      const select = document.getElementById('selectEquipesDisponiveis');
-
-      const equipesAtuais = listaEquipesTodas.filter(e => 
-        (e.unidade_id === unidadeAtual.id || equipesAdicionar.has(e.id)) && !equipesRemover.has(e.id)
-      );
-
-      const disponiveis = listaEquipesTodas.filter(e => 
-        (!e.unidade_id && !equipesAdicionar.has(e.id)) || equipesRemover.has(e.id)
-      );
-
-      lista.innerHTML = '';
-      if (equipesAtuais.length === 0) {
-        lista.innerHTML = '<li style="background: none; padding: 0;">Nenhuma equipe alocada nesta unidade.</li>';
-      } else {
-        equipesAtuais.forEach(e => {
-          lista.innerHTML += `
-            <li>
-              <span><strong>${e.nome}</strong></span>
-              <button class="btn-remover-item" onclick="marcarRemoverEquipe('${e.id}')">Remover</button>
-            </li>
-          `;
-        });
-      }
-
-      select.innerHTML = '<option value="">-- Selecione uma equipe --</option>';
-      if (disponiveis.length > 0) {
-        disponiveis.forEach(e => {
-          select.innerHTML += `<option value="${e.id}">${e.nome}</option>`;
-        });
-      } else {
-        select.innerHTML = '<option value="">Todas as equipes já possuem unidade</option>';
-      }
-    }
-
-    function adicionarEquipeUnidade() {
-      const select = document.getElementById('selectEquipesDisponiveis');
-      const id = select.value;
-      if (!id) return alert('Selecione uma equipe da lista.');
-
-      if (equipesRemover.has(id)) {
-        equipesRemover.delete(id);
-      } else {
-        equipesAdicionar.add(id);
-      }
-      renderizarEditoresEquipes();
-    }
-
-    function marcarRemoverEquipe(id) {
-      if (equipesAdicionar.has(id)) {
-        equipesAdicionar.delete(id);
-      } else {
-        equipesRemover.add(id);
-      }
-      renderizarEditoresEquipes();
-    }
-
-    async function salvarAlteracoesUnidade() {
-      const novoNome = document.getElementById('editNomeUnidade').value;
-      const novoEndereco = document.getElementById('editEnderecoUnidade').value;
-
-      if (!novoNome || !novoEndereco) return alert('Nome e Endereço são obrigatórios.');
-
-      const { error: errUnidade } = await _supabase
-        .from('unidades')
-        .update({ nome: novoNome, endereco: novoEndereco })
-        .eq('id', unidadeAtual.id);
-
-      if (errUnidade) return alert('Erro ao atualizar unidade: ' + errUnidade.message);
-
-      if (equipesAdicionar.size > 0) {
-        await _supabase
-          .from('equipes')
-          .update({ unidade_id: unidadeAtual.id })
-          .in('id', Array.from(equipesAdicionar));
-      }
-
-      if (equipesRemover.size > 0) {
-        await _supabase
-          .from('equipes')
-          .update({ unidade_id: null })
-          .in('id', Array.from(equipesRemover));
-      }
-
-      fecharModal();
-      carregarUnidades();
-    }
-
-    async function excluirUnidade() {
-      if (!confirm(`Tem certeza que deseja excluir a unidade "${unidadeAtual.nome}"?`)) return;
-
-      const { error } = await _supabase
-        .from('unidades')
-        .delete()
-        .eq('id', unidadeAtual.id);
-
-      if (error) {
-        alert('Erro ao excluir unidade: ' + error.message);
-      } else {
-        fecharModal();
-        carregarUnidades();
-      }
-    }
-
-    function cancelarEdicao() {
-      equipesAdicionar.clear();
-      equipesRemover.clear();
-      document.getElementById('modoEdicao').classList.add('oculto');
-      document.getElementById('modoVisualizacao').classList.remove('oculto');
-      carregarEquipesVisualizacao();
-    }
-
-    function fecharModal() {
-      document.getElementById('modalUnidade').classList.add('oculto');
-      equipesAdicionar.clear();
-      equipesRemover.clear();
-      unidadeAtual = null;
-    }
-
-    window.onclick = function(event) {
-      const modal = document.getElementById('modalUnidade');
-      if (event.target === modal) fecharModal();
-    };
-
-    document.getElementById('formUnidade').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const nome = document.getElementById('nomeUnidade').value;
-      const endereco = document.getElementById('enderecoUnidade').value;
-
-      const { error } = await _supabase.from('unidades').insert([{ nome, endereco }]);
-      
-      if (error) {
-        alert('Erro ao cadastrar unidade: ' + error.message);
-      } else {
-        e.target.reset();
-        carregarUnidades();
-      }
-    });
-
-    verificarAutenticacao();
-  </script>
 </body>
 </html>
