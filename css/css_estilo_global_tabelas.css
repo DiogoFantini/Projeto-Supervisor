@@ -9,9 +9,12 @@
 }
 
 body {
-  background-color: #f8fafc;
-  color: #1e293b;
+  background-color: #f1f5f9;
+  color: #0f172a;
   min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: block;
 }
 
 h1, h2, h3 {
@@ -21,15 +24,32 @@ h1, h2, h3 {
 }
 
 /* ==========================================================================
-   LAYOUT PRINCIPAL & RESPONSIVIDADE DE CONTAINER
+   LAYOUT PRINCIPAL & RESPONSIVIDADE DINÂMICA
    ========================================================================== */
-/* Ocupa exatamente a largura restante ao lado da barra lateral sem gaps */
 .conteudo-principal {
-  margin-left: 240px; /* Largura padrão da barra lateral */
-  padding: 24px 32px;
-  width: calc(100% - 240px);
+  margin-left: 220px;
+  padding: 32px 40px;
   min-height: 100vh;
   box-sizing: border-box;
+  width: calc(100% - 220px);
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.3s ease;
+}
+
+body.barra-recolhida .conteudo-principal {
+  margin-left: 0;
+  width: 100%;
+  padding-top: 60px;
+}
+
+.cabecalho-pagina,
+.container-tabela,
+.btn-voltar {
+  max-width: 1100px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .btn-voltar {
@@ -48,7 +68,7 @@ h1, h2, h3 {
 }
 
 /* ==========================================================================
-   CABEÇALHO E BARRA DE AÇÕES
+   CABEÇALHO E CONTROLES DE BUSCA/FILTRO
    ========================================================================== */
 .cabecalho-pagina {
   display: flex;
@@ -71,7 +91,7 @@ h1, h2, h3 {
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 14px;
-  min-width: 260px;
+  min-width: 200px;
   background-color: #ffffff;
   box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -102,31 +122,19 @@ h1, h2, h3 {
   gap: 8px;
   white-space: nowrap;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  transition: background-color 0.2s ease, opacity 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
-.btn-principal {
-  background-color: #0284c7;
-  color: #ffffff;
-}
+.btn-principal { background-color: #0284c7; color: #ffffff; }
 .btn-principal:hover { background-color: #0369a1; }
 
-.btn-sucesso {
-  background-color: #16a34a;
-  color: #ffffff;
-}
+.btn-sucesso { background-color: #16a34a; color: #ffffff; }
 .btn-sucesso:hover { background-color: #15803d; }
 
-.btn-perigo {
-  background-color: #ef4444;
-  color: #ffffff;
-}
+.btn-perigo { background-color: #ef4444; color: #ffffff; }
 .btn-perigo:hover { background-color: #dc2626; }
 
-.btn-secundario {
-  background-color: #64748b;
-  color: #ffffff;
-}
+.btn-secundario { background-color: #64748b; color: #ffffff; }
 .btn-secundario:hover { background-color: #475569; }
 
 .btn-olho {
@@ -163,18 +171,18 @@ h1, h2, h3 {
   justify-content: center;
   transition: background-color 0.2s ease;
 }
+
 .btn-x-remocao:hover { background-color: #dc2626; }
 
 /* ==========================================================================
-   TABELAS RESPONSIVAS
+   ESTILOS DE MOLDURA E ESTRUTURA DAS TABELAS
    ========================================================================== */
 .container-tabela {
-  width: 100%;
   overflow-x: auto;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
   background-color: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
 }
 
 table {
@@ -186,15 +194,27 @@ table {
 
 th, td {
   border-bottom: 1px solid #e2e8f0;
-  padding: 14px 16px;
+  padding: 16px 20px;
   font-size: 14px;
   vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Divisórias verticais entre colunas */
+th:not(:last-child),
+td:not(:last-child) {
+  border-right: 1px solid #e2e8f0;
 }
 
 th {
   background-color: #f8fafc;
   font-weight: 600;
   color: #475569;
+  border-bottom: 2px solid #cbd5e1;
+}
+
+tr:hover td {
+  background-color: #f8fafc;
 }
 
 tr:last-child td {
@@ -217,6 +237,7 @@ tr:last-child td {
   text-decoration: underline;
   font-weight: 600;
 }
+
 .nome-unidade-link:hover,
 .nome-equipe-link:hover {
   color: #0369a1;
@@ -226,18 +247,19 @@ tr:last-child td {
    MODAIS E FORMULÁRIOS
    ========================================================================== */
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(15, 23, 42, 0.5);
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(15, 23, 42, 0.5) !important;
   backdrop-filter: blur(2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1000 !important;
   padding: 16px;
+  box-sizing: border-box;
 }
 
 .modal-card {
@@ -249,7 +271,7 @@ tr:last-child td {
   padding: 24px;
   border-radius: 10px;
   position: relative;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
 }
 
 .modal-fechar {
@@ -321,50 +343,8 @@ tr:last-child td {
   color: #475569;
 }
 
-.lista-membros {
-  margin-top: 10px;
-  padding-left: 0;
-  list-style: none;
-}
-
-.lista-membros li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 12px;
-  background-color: #f1f5f9;
-  border-radius: 6px;
-  margin-bottom: 6px;
-  font-size: 14px;
-}
-
-.btn-remover-membro {
-  background-color: #ef4444;
-  color: #ffffff;
-  padding: 4px 10px;
-  font-size: 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  border: none;
-}
-
-.grupo-adicionar {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.botoes-edicao {
-  display: flex;
-  gap: 10px;
-  justify-content: space-between;
-  margin-top: 20px;
-  padding-top: 14px;
-  border-top: 1px solid #e2e8f0;
-}
-
 /* ==========================================================================
-   REGRAS DE MEDIA QUERIES (DISPOSITIVOS MÓVEIS E TABLETS)
+   RESPONSIVIDADE
    ========================================================================== */
 @media (max-width: 992px) {
   .conteudo-principal {
@@ -375,11 +355,7 @@ tr:last-child td {
 }
 
 @media (max-width: 640px) {
-  .cabecalho-pagina {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
+  .cabecalho-pagina,
   .acoes-cabecalho {
     flex-direction: column;
     align-items: stretch;

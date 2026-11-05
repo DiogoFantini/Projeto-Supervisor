@@ -1,0 +1,195 @@
+/* ==========================================================================
+   PAINEL DE CONTROLE DO CALENDÁRIO E LEGENDA
+   ========================================================================== */
+.painel-calendario-controle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  background-color: #ffffff;
+  padding: 16px 20px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.05);
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.navegacao-mes {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navegacao-mes h2 {
+  font-size: 18px;
+  min-width: 180px;
+  text-align: center;
+  text-transform: capitalize;
+}
+
+.legenda-container {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 13px;
+  color: #475569;
+}
+
+.item-legenda {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cor-legenda {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* PALETA DE CORES DOS TIPOS DE AUSÊNCIA */
+.cor-legenda.ferias, .barra-ausencia.ferias { background-color: #06b6d4; color: #ffffff; }
+.cor-legenda.atestado, .barra-ausencia.atestado { background-color: #ef4444; color: #ffffff; }
+.cor-legenda.abono, .barra-ausencia.abono { background-color: #0284c7; color: #ffffff; }
+.cor-legenda.folga, .barra-ausencia.folga { background-color: #16a34a; color: #ffffff; }
+.cor-legenda.licenca, .barra-ausencia.licenca { background-color: #8b5cf6; color: #ffffff; }
+.cor-legenda.outro, .barra-ausencia.outro { background-color: #f59e0b; color: #ffffff; }
+
+/* ==========================================================================
+   GRADE DO CALENDÁRIO MENSAL
+   ========================================================================== */
+.container-calendario {
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  overflow: hidden;
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
+}
+
+.grade-dias-semana {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background-color: #f8fafc;
+  border-bottom: 2px solid #cbd5e1;
+  text-align: center;
+  font-weight: 600;
+  color: #475569;
+  font-size: 14px;
+}
+
+.grade-dias-semana > div {
+  padding: 12px 6px;
+  border-right: 1px solid #e2e8f0;
+}
+.grade-dias-semana > div:last-child {
+  border-right: none;
+}
+
+.grade-dias-mes {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: minmax(110px, auto);
+}
+
+.celula-dia {
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 6px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background-color: #ffffff;
+  position: relative;
+  min-height: 110px;
+}
+
+.celula-dia:nth-child(7n) {
+  border-right: none;
+}
+
+.celula-dia.outro-mes {
+  background-color: #f8fafc;
+  opacity: 0.5;
+}
+
+.celula-dia.hoje {
+  background-color: #f0f9ff;
+}
+
+.numero-dia {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 2px;
+  margin-left: 8px;
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  border-radius: 50%;
+}
+
+.celula-dia.hoje .numero-dia {
+  background-color: #0284c7;
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   BARRINHA CONTÍNUA FLUIDA ENTRE AS CÉLULAS
+   ========================================================================== */
+.barra-ausencia {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+  margin-bottom: 2px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: opacity 0.15s ease;
+  user-select: none;
+  height: 22px;
+  box-sizing: border-box;
+}
+
+.barra-ausencia:hover {
+  opacity: 0.88;
+}
+
+.barra-ausencia.inicio {
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+  margin-left: 6px;
+  margin-right: -1px;
+}
+
+.barra-ausencia.meio {
+  border-radius: 0;
+  margin-left: -1px;
+  margin-right: -1px;
+}
+
+.barra-ausencia.fim {
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+  margin-left: -1px;
+  margin-right: 6px;
+}
+
+.barra-ausencia.inicio.fim {
+  border-radius: 6px;
+  margin-left: 6px;
+  margin-right: 6px;
+}

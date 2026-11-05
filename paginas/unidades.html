@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestão de Unidades</title>
   <link rel="stylesheet" href="../css/css_barra_lateral.css">
-  <link rel="stylesheet" href="../css/css_estilo_global.css">
+  <link rel="stylesheet" href="../css/css_estilo_global_tabelas.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/barra_lateral.js"></script>
   <script src="../js/cadastrar_unidade.js" defer></script>
@@ -27,15 +27,18 @@
       </div>
     </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Nome da Unidade</th>
-          <th>Endereço</th>
-        </tr>
-      </thead>
-      <tbody id="tabela_unidades"></tbody>
-    </table>
+    <!-- CONTAINER OBRIGATÓRIO PARA A MOLDURA DA TABELA -->
+    <div class="container-tabela">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome da Unidade</th>
+            <th>Endereço</th>
+          </tr>
+        </thead>
+        <tbody id="tabela_unidades"></tbody>
+      </table>
+    </div>
   </main>
 
   <!-- MODAL DE CADASTRO DE NOVA UNIDADE -->

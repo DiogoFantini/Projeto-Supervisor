@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Folgas, abonos e atestados</title>
+  <link rel="stylesheet" href="../css/css_barra_lateral.css">
+  <link rel="stylesheet" href="../css/css_estilo_global_tabelas.css">
+  <link rel="stylesheet" href="../css/css_folgas_abonos.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/barra_lateral.js"></script>
+  <script src="../js/folgas_abonos.js" defer></script>
+</head>
+<body>
+
+  <main class="conteudo-principal">
+    <div class="cabecalho-pagina">
+      <h1>Folgas, abonos e atestados</h1>
+      <div class="acoes-cabecalho">
+        <input 
+          type="text" 
+          id="campo_busca_ausencia" 
+          class="campo-busca" 
+          placeholder="Filtrar por funcionário..." 
+          oninput="filtrar_ausencias()"
+        >
+
+        <!-- FILTRO POR TIPO DE AUSÊNCIA -->
+        <select id="filtro_tipo_ausencia" class="campo-busca" style="min-width: 160px;" onchange="filtrar_ausencias()">
+          <option value="">Todos os tipos</option>
+          <option value="Férias">Férias</option>
+          <option value="Atestado médico">Atestado médico</option>
+          <option value="Abono">Abono</option>
+          <option value="Folga eleitoral">Folga eleitoral</option>
+          <option value="Folga compensatória">Folga compensatória</option>
+          <option value="Licença maternidade/paternidade">Licença maternidade/paternidade</option>
+          <option value="Outro">Outro</option>
+        </select>
+
+        <!-- FILTRO POR UNIDADE -->
+        <select id="filtro_unidade_ausencia" class="campo-busca" style="min-width: 170px;" onchange="ao_mudar_unidade_filtro()">
+          <option value="">Todas as unidades</option>
+        </select>
+
+        <!-- FILTRO POR EQUIPE (EXIBIDO APENAS SE UMA UNIDADE FOR SELECIONADA) -->
+        <select id="filtro_equipe_ausencia" class="campo-busca oculto" style="min-width: 160px;" onchange="filtrar_ausencias()">
+          <option value="">Todas as equipes</option>
+        </select>
+
+        <button type="button" class="btn-principal" onclick="abrir_modal_registrar_ausencia()">+ Registrar ausência</button>
+      </div>
+    </div>
+
+    <!-- CONTROLES DO NAVEGADOR DO CALENDÁRIO -->
+    <div class="painel-calendario-controle">
+      <div class="navegacao-mes">
+        <button type="button" class="btn-secundario" onclick="mudar_mes(-1)">&lt;</button>
+        <h2 id="titulo_mes_ano">Carregando...</h2>
+        <button type="button" class="btn-secundario" onclick="mudar_mes(1)">&gt;</button>
+        <button type="button" style="background-color: #e2e8f0; color: #334155; border: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; cursor: pointer;" onclick="ir_para_hoje()">Hoje</button>
+      </div>
+
+      <!-- LEGENDA DE TIPOS DE AUSÊNCIA -->
+      <div class="legenda-container">
+        <span class="item-legenda"><span class="cor-legenda ferias"></span> Férias</span>
+        <span class="item-legenda"><span class="cor-legenda atestado"></span> Atestado médico</span>
+        <span class="item-legenda"><span class="cor-legenda abono"></span> Abono</span>
+        <span class="item-legenda"><span class="cor-legenda folga"></span> Folga</span>
+        <span class="item-legenda"><span class="cor-legenda licenca"></span> Licença</span>
+        <span class="item-legenda"><span class="cor-legenda outro"></span> Outro</span>
+      </div>
+    </div>
+
+    <!-- GRADE DO CALENDÁRIO MENSAL -->
+    <div class="container-calendario">
+      <div class="grade-dias-semana">
+        <div>Dom</div>
+        <div>Seg</div>
+        <div>Ter</div>
+        <div>Qua</div>
+        <div>Qui</div>
+        <div>Sex</div>
+        <div>Sáb</div>
+      </div>
+      <div id="grade_dias_mes" class="grade-dias-mes"></div>
+    </div>
+  </main>
+
+  <!-- MODAL DE REGISTRO DE AUSÊNCIA -->
+  <div id="modal_cadastro_ausencia" class="modal-overlay oculto">
+    <div class="modal-card">
+      <span class="modal-fechar" onclick="fechar_modal_registrar_ausencia()">&times;</span>
+      <h2>Registrar ausência justificada</h2>
+      
+      <form id="form_cadastro_ausencia" class="form-cadastro" style="margin-top: 16px;">
+        <label><strong>Funcionário<span class="obrigatorio">*</span></strong></label>
+        <select id="select_funcionario_ausencia" required>
+          <option value="">Carregando funcionários...</option>
+        </select>
+
+        <label><strong>Tipo de falta / ausência<span class="obrigatorio">*</span></strong></label>
+        <select id="tipo_ausencia" required>
+          <option value="">-- Selecione o tipo --</option>
+          <option value="Férias">Férias</option>
+          <option value="Atestado médico">Atestado médico</option>
+          <option value="Abono">Abono</option>
+          <option value="Folga eleitoral">Folga eleitoral</option>
+          <option value="Folga compensatória">Folga compensatória</option>
+          <option value="Licença maternidade/paternidade">Licença maternidade/paternidade</option>
+          <option value="Outro">Outro</option>
+        </select>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label><strong>Data de início<span class="obrigatorio">*</span></strong></label>
+            <input type="date" id="data_inicio_ausencia" required onchange="validar_intervalo_datas()">
+          </div>
+          <div>
+            <label><strong>Data de término<span class="obrigatorio">*</span></strong></label>
+            <input type="date" id="data_fim_ausencia" required onchange="validar_intervalo_datas()">
+          </div>
+        </div>
+
+        <label><strong>Motivo / Observação</strong></label>
+        <input type="text" id="motivo_observacao_ausencia" placeholder="Ex: Férias regulamentares, CID 10, etc.">
+
+        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px;">
+          <button type="button" style="background-color: #64748b; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="fechar_modal_registrar_ausencia()">Cancelar</button>
+          <button type="submit" class="btn-principal">Salvar registro</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE DETALHES / EXCLUSÃO DA AUSÊNCIA -->
+  <div id="modal_detalhes_ausencia" class="modal-overlay oculto">
+    <div class="modal-card">
+      <span class="modal-fechar" onclick="fechar_modal_detalhes_ausencia()">&times;</span>
+      <h2>Detalhes da ausência</h2>
+      <div style="margin-top: 16px;">
+        <div class="info-grupo"><strong>Funcionário:</strong> <span id="detalhe_funcionario">-</span></div>
+        <div class="info-grupo"><strong>Tipo:</strong> <span id="detalhe_tipo">-</span></div>
+        <div class="info-grupo"><strong>Período:</strong> <span id="detalhe_periodo">-</span></div>
+        <div class="info-grupo"><strong>Duração:</strong> <span id="detalhe_duracao">-</span></div>
+        <div class="info-grupo"><strong>Motivo / Observação:</strong> <span id="detalhe_motivo">-</span></div>
+      </div>
+      <div style="display: flex; gap: 8px; justify-content: space-between; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+        <button type="button" class="btn-perigo" onclick="excluir_ausencia_atual()">Excluir ausência</button>
+        <button type="button" class="btn-secundario" onclick="fechar_modal_detalhes_ausencia()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

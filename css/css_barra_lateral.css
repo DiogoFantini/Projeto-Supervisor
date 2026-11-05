@@ -7,48 +7,161 @@ body {
   min-height: 100vh;
   margin: 0;
   font-family: system-ui, -apple-system, sans-serif;
-  background-color: #f8fafc;
+  background-color: #f1f5f9;
   color: #0f172a;
 }
 
+/* BARRA LATERAL FIXA */
 .barra-lateral {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 220px;
-  background-color: #0f172a;
+  height: 100vh;
+  background-color: #0b132b;
   color: #ffffff;
   padding: 24px 16px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  z-index: 100;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.conteudo-barra-lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cabecalho-barra-lateral {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #334155;
+  height: 32px;
+}
+
+.barra-lateral h2,
+.titulo-sistema {
+  color: #f8fafc;
+  font-size: 18px;
+  margin: 0;
+  font-weight: 700;
+}
+
+/* BOTÃO FIXO DE ALTERNAR A BARRA */
+.btn-alternar-barra {
+  position: fixed;
+  top: 24px;
+  left: 174px; /* Posicionado perfeitamente no canto da barra aberta */
+  z-index: 101;
+  background-color: #1e293b;
+  color: #94a3b8;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 11px;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              background-color 0.2s ease, 
+              color 0.2s ease,
+              border-color 0.2s ease;
+}
+
+.btn-alternar-barra:hover {
+  background-color: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+}
+
+.navegacao-barra-lateral {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  flex-shrink: 0;
 }
 
-.barra-lateral h2 {
-  color: #f8fafc;
-  font-size: 18px;
-  margin: 0 0 16px 0;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #334155;
-}
-
-.barra-lateral a {
-  display: block;
+.barra-lateral a,
+.link-navegacao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 12px 14px;
   color: #94a3b8;
   text-decoration: none;
   border-radius: 6px;
   font-weight: 600;
   font-size: 14px;
+  cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.barra-lateral a:hover {
+.barra-lateral a:hover,
+.link-navegacao:hover {
   background-color: #1e293b;
   color: #ffffff;
 }
 
-.barra-lateral a.active {
+.barra-lateral a.active,
+.barra-lateral a.ativo,
+.link-navegacao.ativo,
+.link-navegacao.active {
   background-color: #0284c7;
   color: #ffffff;
+}
+
+/* DROPDOWN DE FUNCIONÁRIOS */
+.item-dropdown {
+  display: flex;
+  flex-direction: column;
+}
+
+.btn-dropdown-toggle {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.icone-seta {
+  font-size: 10px;
+  transition: transform 0.2s ease;
+}
+
+.item-dropdown.aberto .icone-seta {
+  transform: rotate(180deg);
+}
+
+.menu-subitens {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 12px;
+  margin-top: 4px;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.sublink-navegacao {
+  display: block;
+  padding: 8px 12px;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 4px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sublink-navegacao:hover,
+.sublink-navegacao.ativo,
+.sublink-navegacao.active {
+  background-color: rgba(2, 132, 199, 0.2);
+  color: #38bdf8;
 }
 
 .barra-lateral .btn-sair {
@@ -61,14 +174,23 @@ body {
   font-weight: bold;
   cursor: pointer;
   text-align: center;
+  transition: background-color 0.2s ease;
 }
 
 .barra-lateral .btn-sair:hover {
   background-color: #dc2626;
 }
 
-.conteudo-principal {
-  flex: 1;
-  padding: 30px;
-  max-width: 900px;
+/* QUANDO A BARRA É RECOLHIDA */
+body.barra-recolhida .barra-lateral {
+  transform: translateX(-100%);
+}
+
+/* O BOTÃO PERMANECE NA TELA E DESLIZA PARA O CANTO ESQUERDO */
+body.barra-recolhida .btn-alternar-barra {
+  left: 16px;
+  background-color: #0b132b;
+  color: #ffffff;
+  border-color: #0284c7;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
