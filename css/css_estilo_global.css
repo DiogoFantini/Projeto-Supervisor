@@ -1,0 +1,399 @@
+/* ==========================================================================
+   RESET E ESTILOS BASE
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  background-color: #f8fafc;
+  color: #1e293b;
+  min-height: 100vh;
+}
+
+h1, h2, h3 {
+  color: #0f172a;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* ==========================================================================
+   LAYOUT PRINCIPAL & RESPONSIVIDADE DE CONTAINER
+   ========================================================================== */
+/* Ocupa exatamente a largura restante ao lado da barra lateral sem gaps */
+.conteudo-principal {
+  margin-left: 240px; /* Largura padrão da barra lateral */
+  padding: 24px 32px;
+  width: calc(100% - 240px);
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.btn-voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  color: #0284c7;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.btn-voltar:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   CABEÇALHO E BARRA DE AÇÕES
+   ========================================================================== */
+.cabecalho-pagina {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.acoes-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.campo-busca {
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  min-width: 260px;
+  background-color: #ffffff;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.campo-busca:focus {
+  outline: none;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+/* ==========================================================================
+   BOTÕES PADRONIZADOS
+   ========================================================================== */
+.btn-principal,
+.btn-sucesso,
+.btn-perigo,
+.btn-secundario {
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.btn-principal {
+  background-color: #0284c7;
+  color: #ffffff;
+}
+.btn-principal:hover { background-color: #0369a1; }
+
+.btn-sucesso {
+  background-color: #16a34a;
+  color: #ffffff;
+}
+.btn-sucesso:hover { background-color: #15803d; }
+
+.btn-perigo {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+.btn-perigo:hover { background-color: #dc2626; }
+
+.btn-secundario {
+  background-color: #64748b;
+  color: #ffffff;
+}
+.btn-secundario:hover { background-color: #475569; }
+
+.btn-olho {
+  background: transparent;
+  border: none;
+  color: #0284c7;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-olho:hover {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.btn-x-remocao {
+  background-color: #ef4444;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+.btn-x-remocao:hover { background-color: #dc2626; }
+
+/* ==========================================================================
+   TABELAS RESPONSIVAS
+   ========================================================================== */
+.container-tabela {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #ffffff;
+  text-align: left;
+}
+
+th, td {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 14px 16px;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: #475569;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.coluna-acoes {
+  text-align: center;
+  width: 70px;
+}
+
+.coluna-remocao {
+  text-align: center;
+  width: 60px;
+}
+
+.nome-unidade-link,
+.nome-equipe-link {
+  color: #0284c7;
+  text-decoration: underline;
+  font-weight: 600;
+}
+.nome-unidade-link:hover,
+.nome-equipe-link:hover {
+  color: #0369a1;
+}
+
+/* ==========================================================================
+   MODAIS E FORMULÁRIOS
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.modal-card {
+  background-color: #ffffff;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px;
+  border-radius: 10px;
+  position: relative;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-fechar {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 22px;
+  font-weight: bold;
+  color: #94a3b8;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.modal-fechar:hover {
+  color: #0f172a;
+}
+
+.oculto {
+  display: none !important;
+}
+
+.form-cadastro,
+.form-edicao {
+  display: grid;
+  gap: 14px;
+}
+
+.form-cadastro label,
+.form-edicao label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+}
+
+.form-cadastro input,
+.form-cadastro select,
+.form-edicao input,
+.form-edicao select {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+  background-color: #ffffff;
+}
+
+.form-cadastro input:focus,
+.form-cadastro select:focus,
+.form-edicao input:focus,
+.form-edicao select:focus {
+  outline: none;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.obrigatorio {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
+.info-grupo {
+  margin-bottom: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.info-grupo strong {
+  color: #475569;
+}
+
+.lista-membros {
+  margin-top: 10px;
+  padding-left: 0;
+  list-style: none;
+}
+
+.lista-membros li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background-color: #f1f5f9;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.btn-remover-membro {
+  background-color: #ef4444;
+  color: #ffffff;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+}
+
+.grupo-adicionar {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.botoes-edicao {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* ==========================================================================
+   REGRAS DE MEDIA QUERIES (DISPOSITIVOS MÓVEIS E TABLETS)
+   ========================================================================== */
+@media (max-width: 992px) {
+  .conteudo-principal {
+    margin-left: 0;
+    width: 100%;
+    padding: 20px 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .cabecalho-pagina {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .acoes-cabecalho {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .campo-busca {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .btn-principal,
+  .btn-sucesso,
+  .btn-perigo,
+  .btn-secundario {
+    width: 100%;
+  }
+}

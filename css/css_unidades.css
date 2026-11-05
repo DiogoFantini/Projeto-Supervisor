@@ -3,6 +3,13 @@ h1, h2, h3 {
   margin: 0;
 }
 
+.conteudo-principal {
+  margin-left: 260px;
+  padding: 32px 40px;
+  max-width: 1200px;
+  box-sizing: border-box;
+}
+
 .cabecalho-pagina {
   display: flex;
   justify-content: space-between;
@@ -14,42 +21,93 @@ h1, h2, h3 {
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .campo-busca {
-  padding: 10px 14px;
+  padding: 11px 14px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 14px;
   width: 280px;
+  background-color: #ffffff;
+  box-sizing: border-box;
 }
 
 .campo-busca:focus {
   outline: none;
   border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
 }
 
 .btn-principal {
   background-color: #0284c7;
   color: #ffffff;
   border: none;
-  padding: 10px 16px;
+  padding: 12px 20px;
   border-radius: 6px;
-  font-weight: bold;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s ease;
 }
 
 .btn-principal:hover {
   background-color: #0369a1;
 }
 
+.btn-secundario {
+  background-color: #64748b;
+  color: #ffffff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-secundario:hover {
+  background-color: #475569;
+}
+
 .btn-perigo {
   background-color: #ef4444;
+  color: #ffffff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s ease;
 }
 
 .btn-perigo:hover {
   background-color: #dc2626;
+}
+
+.nome-unidade-link {
+  color: #0284c7;
+  text-decoration: underline;
+  font-weight: bold;
+}
+
+.nome-unidade-link:hover {
+  color: #0369a1;
 }
 
 table {
@@ -72,17 +130,7 @@ th {
   font-weight: 600;
 }
 
-.nome-unidade-link {
-  color: #0284c7;
-  cursor: pointer;
-  text-decoration: underline;
-  font-weight: bold;
-}
-
-.nome-unidade-link:hover {
-  color: #0369a1;
-}
-
+/* Modais e Formulários */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -99,9 +147,7 @@ th {
 .modal-card {
   background-color: #ffffff;
   width: 90%;
-  max-width: 550px;
-  max-height: 90vh;
-  overflow-y: auto;
+  max-width: 500px;
   padding: 24px;
   border-radius: 8px;
   position: relative;
@@ -126,55 +172,33 @@ th {
   display: none !important;
 }
 
-.form-cadastro, .form-edicao {
+.form-cadastro {
   display: grid;
   gap: 12px;
 }
 
-.form-cadastro input, .form-edicao input, .form-edicao select {
+.form-cadastro label {
+  font-size: 14px;
+  color: #334155;
+}
+
+.form-cadastro input, 
+.form-cadastro select {
+  width: 100%;
   padding: 12px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 14px;
+  box-sizing: border-box;
 }
 
-.lista-itens {
-  margin-top: 10px;
-  padding-left: 0;
-  list-style: none;
+.form-cadastro input:focus, 
+.form-cadastro select:focus {
+  outline: none;
+  border-color: #0284c7;
 }
 
-.lista-itens li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background-color: #f1f5f9;
-  border-radius: 6px;
-  margin-bottom: 6px;
-}
-
-.btn-remover-item {
-  background-color: #ef4444;
-  color: #ffffff;
-  padding: 4px 8px;
-  font-size: 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  border: none;
-}
-
-.grupo-adicionar {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.botoes-edicao {
-  display: flex;
-  gap: 10px;
-  justify-content: space-between;
-  margin-top: 20px;
-  padding-top: 10px;
-  border-top: 1px solid #e2e8f0;
+.obrigatorio {
+  color: #ef4444;
+  margin-left: 2px;
 }

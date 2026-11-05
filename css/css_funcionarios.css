@@ -3,6 +3,13 @@ h1, h2, h3 {
   margin: 0;
 }
 
+.conteudo-principal {
+  margin-left: 260px;
+  padding: 32px 40px;
+  max-width: 1200px;
+  box-sizing: border-box;
+}
+
 .cabecalho-pagina {
   display: flex;
   justify-content: space-between;
@@ -14,31 +21,40 @@ h1, h2, h3 {
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .campo-busca {
-  padding: 10px 14px;
+  padding: 11px 14px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 14px;
   width: 280px;
   background-color: #ffffff;
+  box-sizing: border-box;
 }
 
 .campo-busca:focus {
   outline: none;
   border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
 }
 
 .btn-principal {
   background-color: #0284c7;
   color: #ffffff;
   border: none;
-  padding: 10px 16px;
+  padding: 12px 20px;
   border-radius: 6px;
-  font-weight: bold;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   transition: background-color 0.2s ease;
 }
 
@@ -50,9 +66,10 @@ h1, h2, h3 {
   background-color: #16a34a;
   color: #ffffff;
   border: none;
-  padding: 10px 16px;
+  padding: 12px 20px;
   border-radius: 6px;
-  font-weight: bold;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   transition: background-color 0.2s ease;
@@ -66,10 +83,17 @@ h1, h2, h3 {
   background-color: #ef4444;
   color: #ffffff;
   border: none;
-  padding: 10px 16px;
+  padding: 12px 20px;
   border-radius: 6px;
-  font-weight: bold;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   transition: background-color 0.2s ease;
 }
 
