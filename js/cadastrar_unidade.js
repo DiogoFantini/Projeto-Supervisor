@@ -3,8 +3,8 @@ let lista_unidades_todas = [];
 async function carregar_unidades() {
   const { data, error } = await _supabase
     .from('unidades')
-    .select('*, equipes(id, nome, descricao)')
-    .order('created_at', { ascending: false });
+    .select('*')
+    .order('nome', { ascending: true });
 
   if (error) return console.error('Erro ao buscar unidades:', error);
 
@@ -24,16 +24,17 @@ function exibir_unidades(lista) {
 
   lista.forEach(u => {
     const nome_seguro = sanitizar_texto(u.nome);
-    const endereco_seguro = sanitizar_texto(u.endereco);
+    // Trata valores nulos, undefined ou strings compostas apenas por espaços
+    const endereco_tratado = u.endereco && u.endereco.trim() !== '' ? sanitizar_texto(u.endereco.trim()) : '-';
 
     tbody.innerHTML += `
       <tr>
         <td>
-          <a href="unidade_detalhes.html?id=${u.id}" class="nome-unidade-link">
-            ${nome_seguro}
+          <a href="unidade_detalhes.html?id=${u.id}" class="nome-equipe-link">
+            <strong>${nome_seguro}</strong>
           </a>
         </td>
-        <td>${endereco_seguro}</td>
+        <td>${endereco_tratado}</td>
       </tr>
     `;
   });
@@ -47,11 +48,7 @@ function filtrar_unidades() {
   const filtradas = lista_unidades_todas.filter(u => {
     const bate_nome = u.nome ? u.nome.toLowerCase().includes(termo) : false;
     const bate_endereco = u.endereco ? u.endereco.toLowerCase().includes(termo) : false;
-    const bate_equipe = u.equipes && Array.isArray(u.equipes)
-      ? u.equipes.some(eq => eq.nome && eq.nome.toLowerCase().includes(termo))
-      : false;
-
-    return bate_nome || bate_endereco || bate_equipe;
+    return bate_nome || bate_endereco;
   });
 
   exibir_unidades(filtradas);
@@ -79,8 +76,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const nome = document.getElementById('novo_nome_unidade').value;
       const endereco = document.getElementById('novo_endereco_unidade').value;
 
-      const { error } = await _supabase.from('unidades').insert([{ nome, endereco }]);
-      
+      const { error } = await _supabase.from('unidades').insert([{
+        nome: nome.trim(),
+        endereco: endereco && endereco.trim() !== '' ? endereco.trim() : null
+      }]);
+
       if (error) {
         alert('Erro ao cadastrar unidade: ' + error.message);
       } else {
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   window.addEventListener('click', (event) => {
-    const modal_cadastro = document.getElementById('modal_cadastro_unidade');
-    if (event.target === modal_cadastro) fechar_modal_cadastro();
+    const modal = document.getElementById('modal_cadastro_unidade');
+    if (event.target === modal) fechar_modal_cadastro();
   });
 });

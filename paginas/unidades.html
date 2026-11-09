@@ -55,11 +55,11 @@
       <span class="modal-fechar" onclick="fechar_modal_cadastro()">&times;</span>
       <h2>Cadastrar Nova Unidade</h2>
       <form id="form_cadastro_unidade" class="form-cadastro" style="margin-top: 16px;">
-        <label><strong>Nome da Unidade:</strong></label>
+        <label><strong>Nome da Unidade:<span class="obrigatorio">*</span></strong></label>
         <input type="text" id="novo_nome_unidade" placeholder="Ex: Unidade Central" required>
 
-        <label><strong>Endereço Completo:</strong></label>
-        <input type="text" id="novo_endereco_unidade" placeholder="Ex: Av. Brasil, 1000" required>
+        <label><strong>Endereço Completo (opcional):</strong></label>
+        <input type="text" id="novo_endereco_unidade" placeholder="Ex: Av. Brasil, 1000">
 
         <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px;">
           <button type="button" style="background-color: #64748b; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="fechar_modal_cadastro()">Cancelar</button>
