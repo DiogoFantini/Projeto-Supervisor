@@ -3,10 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+  connect-src 'self' https://*.supabase.co;
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data:;
+">
   <title>Detalhes da unidade</title>
   <link rel="stylesheet" href="../css/css_barra_lateral.css">
   <link rel="stylesheet" href="../css/css_estilo_global_tabelas.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/autenticacao.js"></script>
   <script src="../js/barra_lateral.js"></script>
   <script src="../js/unidade_detalhes.js" defer></script>
 </head>

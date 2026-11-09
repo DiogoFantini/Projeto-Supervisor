@@ -1,21 +1,8 @@
-const SUPABASE_URL = 'https://tnlsqmrluxugwialhrej.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_QaX1w_iFxZold_RnCkHtSA_z6hAbM-2';
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 let equipe_id = null;
 let unidade_id = null;
 let lista_integrantes_equipe = [];
 let modo_remover_func_ativo = false;
 let funcionario_selecionado_para_remover = null;
-
-async function verificar_autenticacao() {
-  const { data: { session } } = await _supabase.auth.getSession();
-  if (!session) {
-    window.location.href = 'login.html';
-  } else {
-    obter_parametros_url();
-  }
-}
 
 function obter_parametros_url() {
   const parametros = new URLSearchParams(window.location.search);
@@ -98,15 +85,19 @@ function exibir_integrantes(lista) {
   }
 
   lista.forEach(func => {
+    const nome_seguro = sanitizar_texto(func.nome);
+    const cargo_seguro = sanitizar_texto(func.cargo || '-');
+    const esp_segura = sanitizar_texto(func.especializacao || '-');
+
     const colunaAcaoHTML = modo_remover_func_ativo 
       ? `<td class="coluna-remocao"><button class="btn-x-remocao" onclick='confirmar_remocao_funcionario(${JSON.stringify(func)})' title="Remover funcionário">&times;</button></td>`
       : '';
 
     tbody.innerHTML += `
       <tr>
-        <td><strong>${func.nome}</strong></td>
-        <td>${func.cargo || '-'}</td>
-        <td>${func.especializacao || '-'}</td>
+        <td><strong>${nome_seguro}</strong></td>
+        <td>${cargo_seguro}</td>
+        <td>${esp_segura}</td>
         ${colunaAcaoHTML}
       </tr>
     `;
@@ -196,13 +187,15 @@ async function carregar_funcionarios_disponiveis() {
     select.innerHTML = '<option value="">Nenhum funcionário disponível sem equipe</option>';
   } else {
     disponiveis.forEach(f => {
-      select.innerHTML += `<option value="${f.id}">${f.nome} (${f.cargo || 'Sem cargo'})</option>`;
+      const nome_seguro = sanitizar_texto(f.nome);
+      const cargo_seguro = sanitizar_texto(f.cargo || 'Sem cargo');
+      select.innerHTML += `<option value="${f.id}">${nome_seguro} (${cargo_seguro})</option>`;
     });
   }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  verificar_autenticacao();
+  obter_parametros_url();
 
   const formAdicionar = document.getElementById('form_adicionar_funcionario_equipe');
   if (formAdicionar) {

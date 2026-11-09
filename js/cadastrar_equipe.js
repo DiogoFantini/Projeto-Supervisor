@@ -1,22 +1,9 @@
-const SUPABASE_URL = 'https://tnlsqmrluxugwialhrej.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_QaX1w_iFxZold_RnCkHtSA_z6hAbM-2';
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 let equipe_atual = null;
 let lista_equipes_todas = [];
 let lista_unidades_todas = [];
 let membros_adicionar = new Set();
 let membros_remover = new Set();
 let lista_funcionarios_todos = [];
-
-async function verificar_autenticacao() {
-  const { data: { session } } = await _supabase.auth.getSession();
-  if (!session) {
-    window.location.href = 'login.html';
-  } else {
-    carregar_equipes();
-  }
-}
 
 async function carregar_equipes() {
   const { data, error } = await _supabase
@@ -41,13 +28,15 @@ function exibir_equipes(lista) {
   }
 
   lista.forEach(eq => {
-    const nome_unidade = eq.unidades?.nome || '-';
+    const nome_seguro = sanitizar_texto(eq.nome);
+    const descricao_segura = sanitizar_texto(eq.descricao || '-');
+    const nome_unidade_seguro = sanitizar_texto(eq.unidades?.nome || '-');
 
     tbody.innerHTML += `
       <tr>
-        <td><strong>${eq.nome}</strong></td>
-        <td>${eq.descricao || '-'}</td>
-        <td>${nome_unidade}</td>
+        <td><strong>${nome_seguro}</strong></td>
+        <td>${descricao_segura}</td>
+        <td>${nome_unidade_seguro}</td>
         <td class="coluna-acoes">
           <button class="btn-olho" onclick='abrir_modal_detalhes(${JSON.stringify(eq)})' title="Visualizar detalhes">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -103,7 +92,8 @@ async function carregar_unidades_select(selectElementId, valorSelecionado = '') 
   selectUnidade.innerHTML = '<option value="">-- Selecione a unidade (opcional) --</option>';
 
   lista_unidades_todas.forEach(u => {
-    selectUnidade.innerHTML += `<option value="${u.id}">${u.nome}</option>`;
+    const nome_seguro = sanitizar_texto(u.nome);
+    selectUnidade.innerHTML += `<option value="${u.id}">${nome_seguro}</option>`;
   });
 
   if (valorSelecionado) {
@@ -153,7 +143,9 @@ async function carregar_membros_visualizacao() {
     lista.innerHTML = '<li style="background: none; padding: 0;">Nenhum funcionário nesta equipe.</li>';
   } else {
     membros.forEach(m => {
-      lista.innerHTML += `<li><span><strong>${m.nome}</strong> (${m.cargo || '-'})</span></li>`;
+      const nome_seguro = sanitizar_texto(m.nome);
+      const cargo_seguro = sanitizar_texto(m.cargo || '-');
+      lista.innerHTML += `<li><span><strong>${nome_seguro}</strong> (${cargo_seguro})</span></li>`;
     });
   }
 }
@@ -170,7 +162,6 @@ async function ativar_modo_edicao() {
   document.getElementById('modo_visualizacao').classList.add('oculto');
   document.getElementById('modo_edicao').classList.remove('oculto');
 
-  // Busca apenas funcionários que não possuem equipe ou pertencem a esta equipe
   const { data: funcionarios } = await _supabase
     .from('funcionarios')
     .select('id, nome, cargo, equipe_id');
@@ -187,7 +178,6 @@ function renderizar_editores_membros() {
     (f.equipe_id === equipe_atual.id || membros_adicionar.has(f.id)) && !membros_remover.has(f.id)
   );
 
-  // Filtra estritamente funcionários sem nenhuma equipe alocada (equipe_id nulo)
   const disponiveis = lista_funcionarios_todos.filter(f => 
     (!f.equipe_id && !membros_adicionar.has(f.id)) || membros_remover.has(f.id)
   );
@@ -197,9 +187,11 @@ function renderizar_editores_membros() {
     lista.innerHTML = '<li style="background: none; padding: 0;">Nenhum funcionário nesta equipe.</li>';
   } else {
     membros_atuais.forEach(m => {
+      const nome_seguro = sanitizar_texto(m.nome);
+      const cargo_seguro = sanitizar_texto(m.cargo || '-');
       lista.innerHTML += `
         <li>
-          <span><strong>${m.nome}</strong> - ${m.cargo || '-'}</span>
+          <span><strong>${nome_seguro}</strong> - ${cargo_seguro}</span>
           <button class="btn-remover-membro" onclick="marcar_remover_membro('${m.id}')">Remover</button>
         </li>
       `;
@@ -209,7 +201,9 @@ function renderizar_editores_membros() {
   select.innerHTML = '<option value="">-- Selecione um funcionário --</option>';
   if (disponiveis.length > 0) {
     disponiveis.forEach(f => {
-      select.innerHTML += `<option value="${f.id}">${f.nome} (${f.cargo || '-'})</option>`;
+      const nome_seguro = sanitizar_texto(f.nome);
+      const cargo_seguro = sanitizar_texto(f.cargo || '-');
+      select.innerHTML += `<option value="${f.id}">${nome_seguro} (${cargo_seguro})</option>`;
     });
   } else {
     select.innerHTML = '<option value="">Nenhum funcionário disponível sem equipe</option>';
@@ -307,7 +301,7 @@ function fechar_modal_detalhes() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  verificar_autenticacao();
+  carregar_equipes();
 
   const formCadastro = document.getElementById('form_cadastro_equipe');
   if (formCadastro) {

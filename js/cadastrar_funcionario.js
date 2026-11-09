@@ -1,19 +1,6 @@
-const SUPABASE_URL = 'https://tnlsqmrluxugwialhrej.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_QaX1w_iFxZold_RnCkHtSA_z6hAbM-2';
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 let lista_funcionarios_todos = [];
 let lista_unidades_todas = [];
 let funcionario_atual = null;
-
-async function verificar_autenticacao() {
-  const { data: { session } } = await _supabase.auth.getSession();
-  if (!session) {
-    window.location.href = 'login.html';
-  } else {
-    carregar_funcionarios();
-  }
-}
 
 async function carregar_funcionarios() {
   const { data, error } = await _supabase
@@ -38,16 +25,19 @@ function exibir_funcionarios(lista) {
   }
 
   lista.forEach(f => {
-    const nome_equipe = f.equipes?.nome || '-';
-    const nome_unidade = f.equipes?.unidades?.nome || '-';
+    const nome_seguro = sanitizar_texto(f.nome);
+    const cargo_seguro = sanitizar_texto(f.cargo || '-');
+    const esp_segura = sanitizar_texto(f.especializacao || '-');
+    const nome_equipe_seguro = sanitizar_texto(f.equipes?.nome || '-');
+    const nome_unidade_seguro = sanitizar_texto(f.equipes?.unidades?.nome || '-');
 
     tbody.innerHTML += `
       <tr>
-        <td><strong>${f.nome}</strong></td>
-        <td>${f.cargo || '-'}</td>
-        <td>${f.especializacao || '-'}</td>
-        <td>${nome_equipe}</td>
-        <td>${nome_unidade}</td>
+        <td><strong>${nome_seguro}</strong></td>
+        <td>${cargo_seguro}</td>
+        <td>${esp_segura}</td>
+        <td>${nome_equipe_seguro}</td>
+        <td>${nome_unidade_seguro}</td>
         <td class="coluna-acoes">
           <button class="btn-olho" onclick='abrir_modal_detalhes(${JSON.stringify(f)})' title="Visualizar detalhes">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -222,7 +212,8 @@ async function carregar_unidades_select() {
   selectUnidade.innerHTML = '<option value="">-- Selecione a unidade (opcional) --</option>';
 
   lista_unidades_todas.forEach(u => {
-    selectUnidade.innerHTML += `<option value="${u.id}">${u.nome}</option>`;
+    const nome_seguro = sanitizar_texto(u.nome);
+    selectUnidade.innerHTML += `<option value="${u.id}">${nome_seguro}</option>`;
   });
 }
 
@@ -257,7 +248,8 @@ async function carregar_equipes_da_unidade() {
     selectEquipe.innerHTML = '<option value="">Nenhuma equipe cadastrada nesta unidade</option>';
   } else {
     equipes.forEach(eq => {
-      selectEquipe.innerHTML += `<option value="${eq.id}">${eq.nome}</option>`;
+      const nome_seguro = sanitizar_texto(eq.nome);
+      selectEquipe.innerHTML += `<option value="${eq.id}">${nome_seguro}</option>`;
     });
   }
 }
@@ -278,7 +270,8 @@ async function carregar_unidades_select_edicao() {
   selectUnidade.innerHTML = '<option value="">-- Selecione a unidade (opcional) --</option>';
 
   (unidades || []).forEach(u => {
-    selectUnidade.innerHTML += `<option value="${u.id}">${u.nome}</option>`;
+    const nome_seguro = sanitizar_texto(u.nome);
+    selectUnidade.innerHTML += `<option value="${u.id}">${nome_seguro}</option>`;
   });
 
   const unidadeAtualId = funcionario_atual.equipes?.unidade_id || funcionario_atual.equipes?.unidades?.id;
@@ -318,7 +311,8 @@ async function carregar_equipes_da_unidade_edicao() {
     selectEquipe.innerHTML = '<option value="">Nenhuma equipe cadastrada nesta unidade</option>';
   } else {
     equipes.forEach(eq => {
-      selectEquipe.innerHTML += `<option value="${eq.id}">${eq.nome}</option>`;
+      const nome_seguro = sanitizar_texto(eq.nome);
+      selectEquipe.innerHTML += `<option value="${eq.id}">${nome_seguro}</option>`;
     });
 
     if (funcionario_atual.equipe_id) {
@@ -345,7 +339,7 @@ async function excluir_funcionario() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  verificar_autenticacao();
+  carregar_funcionarios();
 
   const formCadastro = document.getElementById('form_cadastro_funcionario');
   if (formCadastro) {

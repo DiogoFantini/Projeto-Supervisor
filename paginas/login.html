@@ -3,37 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+  connect-src 'self' https://*.supabase.co;
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data:;
+">
   <title>Login - Gestão de Funcionários</title>
   <link rel="stylesheet" href="../css/css_login.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/autenticacao.js"></script>
 </head>
 <body>
 
   <div class="card">
     <h2>Entrar no Sistema</h2>
-    <form id="formLogin">
-      <input type="email" id="loginEmail" placeholder="Seu E-mail" required>
-      <input type="password" id="loginSenha" placeholder="Sua Senha" required>
+    <form id="form_login">
+      <input type="email" id="login_email" placeholder="Seu E-mail" required>
+      <input type="password" id="login_senha" placeholder="Sua Senha" required>
       <button type="submit">Entrar</button>
     </form>
   </div>
 
   <script>
-    const SUPABASE_URL = 'https://tnlsqmrluxugwialhrej.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_QaX1w_iFxZold_RnCkHtSA_z6hAbM-2';
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    async function checarSessao() {
-      const { data: { session } } = await _supabase.auth.getSession();
-      if (session) {
-        window.location.href = 'unidades.html';
-      }
-    }
-
-    document.getElementById('formLogin').addEventListener('submit', async (e) => {
+    document.getElementById('form_login').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('loginEmail').value;
-      const password = document.getElementById('loginSenha').value;
+      const email = document.getElementById('login_email').value;
+      const password = document.getElementById('login_senha').value;
 
       const { error } = await _supabase.auth.signInWithPassword({ email, password });
       if (error) {
@@ -42,8 +39,6 @@
         window.location.href = 'unidades.html';
       }
     });
-
-    checarSessao();
   </script>
 </body>
 </html>

@@ -1,21 +1,7 @@
-const SUPABASE_URL = 'https://tnlsqmrluxugwialhrej.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_QaX1w_iFxZold_RnCkHtSA_z6hAbM-2';
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 let lista_ausencias_todas = [];
 let lista_funcionarios_todos = [];
 let data_atual_calendario = new Date();
 let ausencia_selecionada = null;
-
-async function verificar_autenticacao() {
-  const { data: { session } } = await _supabase.auth.getSession();
-  if (!session) {
-    window.location.href = 'login.html';
-  } else {
-    await carregar_unidades_filtro();
-    carregar_ausencias();
-  }
-}
 
 async function carregar_ausencias() {
   const { data, error } = await _supabase
@@ -48,7 +34,8 @@ async function carregar_unidades_filtro() {
 
   selectUnidade.innerHTML = '<option value="">Todas as unidades</option>';
   (unidades || []).forEach(u => {
-    selectUnidade.innerHTML += `<option value="${u.id}">${u.nome}</option>`;
+    const nome_seguro = sanitizar_texto(u.nome);
+    selectUnidade.innerHTML += `<option value="${u.id}">${nome_seguro}</option>`;
   });
 }
 
@@ -91,7 +78,8 @@ async function carregar_equipes_filtro() {
     selectEquipe.innerHTML = '<option value="">Nenhuma equipe cadastrada nesta unidade</option>';
   } else {
     equipes.forEach(eq => {
-      selectEquipe.innerHTML += `<option value="${eq.id}">${eq.nome}</option>`;
+      const nome_seguro = sanitizar_texto(eq.nome);
+      selectEquipe.innerHTML += `<option value="${eq.id}">${nome_seguro}</option>`;
     });
   }
 }
@@ -153,13 +141,11 @@ function renderizar_calendario() {
   const diaSemanaInicial = primeiroDiaMes.getDay();
   const totalDiasMes = ultimoDiaMes.getDate();
 
-  // Filtros
   const termoBusca = (document.getElementById('campo_busca_ausencia')?.value || '').toLowerCase().trim();
   const filtroTipo = document.getElementById('filtro_tipo_ausencia')?.value || '';
   const filtroUnidade = document.getElementById('filtro_unidade_ausencia')?.value || '';
   const filtroEquipe = document.getElementById('filtro_equipe_ausencia')?.value || '';
 
-  // Aplica filtragem (Nome + Tipo + Unidade + Equipe)
   const ausenciasFiltradas = lista_ausencias_todas.filter(a => {
     const nome = a.funcionarios?.nome ? a.funcionarios.nome.toLowerCase() : '';
     const bateNome = nome.includes(termoBusca);
@@ -174,7 +160,6 @@ function renderizar_calendario() {
     return bateNome && bateTipo && bateUnidade && bateEquipe;
   });
 
-  // Dias do mês anterior para completar a primeira semana
   const ultimoDiaMesAnterior = new Date(ano, mes, 0).getDate();
   for (let i = diaSemanaInicial - 1; i >= 0; i--) {
     const diaNum = ultimoDiaMesAnterior - i;
@@ -183,7 +168,6 @@ function renderizar_calendario() {
 
   const hojeStr = formatar_data_iso(new Date());
 
-  // Construção dos dias do mês corrente
   for (let dia = 1; dia <= totalDiasMes; dia++) {
     const dataAtual = new Date(ano, mes, dia);
     const dataIso = formatar_data_iso(dataAtual);
@@ -199,16 +183,17 @@ function renderizar_calendario() {
         const eFim = dataIso === ausencia.data_fim ? 'fim' : '';
         const eMeio = (!eInicio && !eFim) ? 'meio' : '';
 
-        const nomeFuncionario = ausencia.funcionarios?.nome || 'Funcionário';
+        const nomeFuncionario = sanitizar_texto(ausencia.funcionarios?.nome || 'Funcionário');
+        const tipoAusenciaSeguro = sanitizar_texto(ausencia.tipo_ausencia);
         const textoExibicao = (eInicio || dia === 1 || dataAtual.getDay() === 0) 
-          ? `${nomeFuncionario} (${ausencia.tipo_ausencia})` 
+          ? `${nomeFuncionario} (${tipoAusenciaSeguro})` 
           : '&nbsp;';
 
         barrasHtml += `
           <div 
             class="barra-ausencia ${classeCor} ${eInicio} ${eFim} ${eMeio}" 
             onclick='abrir_modal_detalhes_ausencia(${JSON.stringify(ausencia)})'
-            title="${nomeFuncionario} - ${ausencia.tipo_ausencia} (${formatar_data_br(ausencia.data_inicio)} até ${formatar_data_br(ausencia.data_fim)})"
+            title="${nomeFuncionario} - ${tipoAusenciaSeguro} (${formatar_data_br(ausencia.data_inicio)} até ${formatar_data_br(ausencia.data_fim)})"
           >
             ${textoExibicao}
           </div>
@@ -224,7 +209,6 @@ function renderizar_calendario() {
     `;
   }
 
-  // Completa a última semana com os primeiros dias do próximo mês
   const totalCelulasExibidas = diaSemanaInicial + totalDiasMes;
   const celulasRestantes = (7 - (totalCelulasExibidas % 7)) % 7;
   for (let i = 1; i <= celulasRestantes; i++) {
@@ -308,7 +292,9 @@ async function carregar_select_funcionarios() {
   select.innerHTML = '<option value="">-- Selecione o funcionário --</option>';
 
   lista_funcionarios_todos.forEach(f => {
-    select.innerHTML += `<option value="${f.id}">${f.nome} (${f.cargo || 'Sem cargo'})</option>`;
+    const nome_seguro = sanitizar_texto(f.nome);
+    const cargo_seguro = sanitizar_texto(f.cargo || 'Sem cargo');
+    select.innerHTML += `<option value="${f.id}">${nome_seguro} (${cargo_seguro})</option>`;
   });
 }
 
@@ -322,8 +308,9 @@ function validar_intervalo_datas() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  verificar_autenticacao();
+document.addEventListener('DOMContentLoaded', async () => {
+  await carregar_unidades_filtro();
+  carregar_ausencias();
 
   const form = document.getElementById('form_cadastro_ausencia');
   if (form) {

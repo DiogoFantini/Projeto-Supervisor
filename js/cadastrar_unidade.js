@@ -1,17 +1,4 @@
-const SUPABASE_URL = 'https://tnlsqmrluxugwialhrej.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_QaX1w_iFxZold_RnCkHtSA_z6hAbM-2';
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 let lista_unidades_todas = [];
-
-async function verificar_autenticacao() {
-  const { data: { session } } = await _supabase.auth.getSession();
-  if (!session) {
-    window.location.href = 'login.html';
-  } else {
-    carregar_unidades();
-  }
-}
 
 async function carregar_unidades() {
   const { data, error } = await _supabase
@@ -36,14 +23,17 @@ function exibir_unidades(lista) {
   }
 
   lista.forEach(u => {
+    const nome_seguro = sanitizar_texto(u.nome);
+    const endereco_seguro = sanitizar_texto(u.endereco);
+
     tbody.innerHTML += `
       <tr>
         <td>
           <a href="unidade_detalhes.html?id=${u.id}" class="nome-unidade-link">
-            ${u.nome}
+            ${nome_seguro}
           </a>
         </td>
-        <td>${u.endereco}</td>
+        <td>${endereco_seguro}</td>
       </tr>
     `;
   });
@@ -80,7 +70,7 @@ function fechar_modal_cadastro() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  verificar_autenticacao();
+  carregar_unidades();
 
   const formCadastro = document.getElementById('form_cadastro_unidade');
   if (formCadastro) {

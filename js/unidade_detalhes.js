@@ -1,20 +1,7 @@
-const SUPABASE_URL = 'https://tnlsqmrluxugwialhrej.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_QaX1w_iFxZold_RnCkHtSA_z6hAbM-2';
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 let unidade_id = null;
 let lista_equipes_unidade = [];
 let modo_desvincular_ativo = false;
 let equipe_selecionada_para_desvincular = null;
-
-async function verificar_autenticacao() {
-  const { data: { session } } = await _supabase.auth.getSession();
-  if (!session) {
-    window.location.href = 'login.html';
-  } else {
-    obter_id_url_e_carregar();
-  }
-}
 
 function obter_id_url_e_carregar() {
   const parametros = new URLSearchParams(window.location.search);
@@ -90,6 +77,8 @@ function exibir_equipes(lista) {
   }
 
   lista.forEach(eq => {
+    const nome_seguro = sanitizar_texto(eq.nome);
+    const descricao_segura = sanitizar_texto(eq.descricao || '-');
     const colunaAcaoHTML = modo_desvincular_ativo 
       ? `<td class="coluna-remocao"><button class="btn-x-remocao" onclick='confirmar_desvinculo_equipe(${JSON.stringify(eq)})' title="Desvincular equipe">&times;</button></td>`
       : '';
@@ -98,10 +87,10 @@ function exibir_equipes(lista) {
       <tr>
         <td>
           <a href="equipe_detalhes.html?id=${eq.id}&unidade_id=${unidade_id}" class="nome-equipe-link">
-            ${eq.nome}
+            ${nome_seguro}
           </a>
         </td>
-        <td>${eq.descricao || '-'}</td>
+        <td>${descricao_segura}</td>
         ${colunaAcaoHTML}
       </tr>
     `;
@@ -190,13 +179,14 @@ async function carregar_equipes_disponiveis() {
     select.innerHTML = '<option value="">Nenhuma equipe disponível sem unidade cadastrada</option>';
   } else {
     disponiveis.forEach(eq => {
-      select.innerHTML += `<option value="${eq.id}">${eq.nome}</option>`;
+      const nome_seguro = sanitizar_texto(eq.nome);
+      select.innerHTML += `<option value="${eq.id}">${nome_seguro}</option>`;
     });
   }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  verificar_autenticacao();
+  obter_id_url_e_carregar();
 
   const formVincular = document.getElementById('form_vincular_equipe_unidade');
   if (formVincular) {
