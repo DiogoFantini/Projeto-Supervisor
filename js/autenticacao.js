@@ -1,6 +1,25 @@
 const SUPABASE_URL = 'https://tnlsqmrluxugwialhrej.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_QaX1w_iFxZold_RnCkHtSA_z6hAbM-2';
 
+let tempo_inatividade;
+
+function resetar_temporizador_inatividade() {
+  clearTimeout(tempo_inatividade);
+  // 15 minutos (15 * 60 * 1000 ms)
+  tempo_inatividade = setTimeout(() => {
+    alert('Sua sessão foi encerrada por tempo de inatividade.');
+    fazer_logout();
+  }, 15 * 60 * 1000);
+}
+
+// Monitora interações do usuário na tela
+window.addEventListener('mousemove', resetar_temporizador_inatividade);
+window.addEventListener('keydown', resetar_temporizador_inatividade);
+window.addEventListener('click', resetar_temporizador_inatividade);
+
+// Inicializa o temporizador ao carregar
+resetar_temporizador_inatividade();
+
 // Configurado para armazenar a sessão no sessionStorage (desloga automaticamente ao fechar o navegador/aba)
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
