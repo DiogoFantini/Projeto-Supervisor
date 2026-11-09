@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="
-  default-src 'self';
-  script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
-  connect-src 'self' https://*.supabase.co;
-  style-src 'self' 'unsafe-inline';
-  img-src 'self' data:;
-">
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+    connect-src 'self' https://*.supabase.co;
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data:;
+  ">
   <title>Login - Gestão de Funcionários</title>
   <link rel="stylesheet" href="../css/css_login.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
@@ -20,8 +20,8 @@
   <div class="card">
     <h2>Entrar no Sistema</h2>
     <form id="form_login">
-      <input type="email" id="login_email" placeholder="Seu E-mail" required>
-      <input type="password" id="login_senha" placeholder="Sua Senha" required>
+      <input type="email" id="login_email" placeholder="Seu E-mail" required autocomplete="email">
+      <input type="password" id="login_senha" placeholder="Sua Senha" required autocomplete="current-password">
       <button type="submit">Entrar</button>
     </form>
   </div>
