@@ -1,45 +1,191 @@
+/* ==========================================================================
+   ESTILOS DE LOGIN BASEADOS NO MODELO VISUAL
+   ========================================================================== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
 body {
-  font-family: system-ui, -apple-system, sans-serif;
-  max-width: 400px;
-  margin: 80px auto;
-  padding: 0 15px;
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: #f1f3f5;
+  color: #333333;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
 }
 
-.card {
-  background-color: #ffffff;
-  padding: 24px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+.container-login {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-h2 {
-  color: #1e293b;
-  margin-top: 0;
+/* ==========================================================================
+   ILUSTRAÇÃO E LOGO
+   ========================================================================== */
+
+.cabecalho-login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+  text-align: center;
 }
 
-form {
-  display: grid;
-  gap: 12px;
+.wrapper-ilustracao {
+  width: 180px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
 }
 
-input, button {
-  padding: 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
+.imagem-ilustracao {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.placeholder-ilustracao {
+  width: 120px;
+  height: 120px;
+  background-color: #fce8e8;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.subtitulo-sistema {
   font-size: 14px;
+  color: #6c757d;
+  font-weight: 500;
+  margin-top: 4px;
 }
 
-button {
-  background-color: #0284c7;
+/* ==========================================================================
+   CARTÃO DO FORMULÁRIO
+   ========================================================================== */
+
+.card-login {
+  background-color: #ffffff;
+  width: 100%;
+  padding: 32px 28px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+}
+
+#form_login {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.grupo-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.grupo-campo label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #212529;
+}
+
+.obrigatorio {
+  color: #de5256;
+}
+
+.grupo-campo input[type="email"],
+.grupo-campo input[type="password"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #495057;
+  background-color: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.grupo-campo input:focus {
+  outline: none;
+  border-color: #de5256;
+  box-shadow: 0 0 0 3px rgba(222, 82, 86, 0.15);
+}
+
+.grupo-lembrar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  margin-bottom: 6px;
+}
+
+.grupo-lembrar input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #de5256;
+  cursor: pointer;
+}
+
+.grupo-lembrar label {
+  font-size: 14px;
+  color: #495057;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ==========================================================================
+   BOTÃO DE AÇÃO PRINCIPAL
+   ========================================================================== */
+
+.btn-entrar {
+  background-color: #de5256;
   color: #ffffff;
   border: none;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
-  font-weight: bold;
+  transition: background-color 0.2s ease;
+  width: 100%;
+  margin-top: 4px;
 }
 
-button:hover {
-  background-color: #0369a1;
+.btn-entrar:hover {
+  background-color: #c94347;
+}
+
+/* ==========================================================================
+   RODAPÉ E LINKS
+   ========================================================================== */
+
+.rodape-login {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.link-esqueci-senha {
+  color: #de5256;
+  font-size: 14px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.link-esqueci-senha:hover {
+  text-decoration: underline;
+  color: #c94347;
 }

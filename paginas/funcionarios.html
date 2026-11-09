@@ -17,6 +17,27 @@
   <script src="../js/autenticacao.js" crossorigin="anonymous"></script>
   <script src="../js/barra_lateral.js" crossorigin="anonymous"></script>
   <script src="../js/cadastrar_funcionario.js" defer crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
+  <script src="../js/importar_exportar_funcionarios.js" defer crossorigin="anonymous"></script>
+  <style>
+    .btn-icone {
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #475569;
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-icone:hover {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      border-color: #94a3b8;
+    }
+  </style>
 </head>
 <body>
 
@@ -28,9 +49,28 @@
           type="text" 
           id="campo_busca_funcionario" 
           class="campo-busca" 
-          placeholder="Buscar por nome, cargo, especialização, equipe..." 
+          placeholder="Buscar por nome, Nº funcional, cargo, classificação, equipe..." 
           oninput="filtrar_funcionarios()"
         >
+        
+        <!-- BOTÃO IMPORTAR -->
+        <button type="button" class="btn-icone" onclick="abrir_modal_importacao()" title="Importar lista de funcionários">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+        </button>
+
+        <!-- BOTÃO EXPORTAR -->
+        <button type="button" class="btn-icone" onclick="exportar_funcionarios_excel()" title="Exportar lista de funcionários">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+        </button>
+
         <button type="button" class="btn-principal" onclick="abrir_modal_cadastro()">+ Adicionar funcionário</button>
       </div>
     </div>
@@ -39,7 +79,9 @@
       <thead>
         <tr>
           <th>Nome</th>
+          <th>Nº Funcional</th>
           <th>Cargo</th>
+          <th>Classificação</th>
           <th>Especialização</th>
           <th>Equipe</th>
           <th>Unidade</th>
@@ -59,6 +101,9 @@
         <label><strong>Nome completo<span class="obrigatorio">*</span></strong></label>
         <input type="text" id="novo_nome_funcionario" placeholder="Ex: João da Silva" required>
 
+        <label><strong>Número funcional<span class="obrigatorio">*</span></strong></label>
+        <input type="text" id="novo_numero_funcional_funcionario" placeholder="Ex: NF-12345" required>
+
         <label><strong>Cargo<span class="obrigatorio">*</span></strong></label>
         <select id="novo_cargo_funcionario" required onchange="atualizar_campo_registro()">
           <option value="">-- Selecione o cargo --</option>
@@ -70,13 +115,16 @@
           <option value="Outro">Outro</option>
         </select>
 
+        <label><strong>Classificação funcional</strong></label>
+        <input type="text" id="novo_classificacao_funcionario" placeholder="Ex: Efetivo, Comissionado, Statutário...">
+
         <div id="container_registro_profissional" class="oculto form-cadastro" style="padding: 0;">
-          <label><strong id="label_registro_profissional">Registro profissional<span class="obrigatorio">*</span></strong></label>
+          <label><strong id="label_registro_profissional">Registro profissional (opcional)</strong></label>
           <input type="text" id="novo_registro_funcionario" placeholder="Ex: 123456">
         </div>
 
-        <label><strong>Especialização<span class="obrigatorio">*</span></strong></label>
-        <input type="text" id="nova_especializacao_funcionario" placeholder="Ex: Pediatria, UTI adulto, geral..." required>
+        <label><strong>Especialização (opcional)</strong></label>
+        <input type="text" id="nova_especializacao_funcionario" placeholder="Ex: Pediatria, UTI adulto, geral...">
 
         <label><strong>Unidade</strong></label>
         <select id="novo_unidade_funcionario" onchange="carregar_equipes_da_unidade()">
@@ -84,9 +132,9 @@
         </select>
 
         <div id="container_equipe_funcionario" class="oculto form-cadastro" style="padding: 0;">
-          <label><strong>Equipe<span class="obrigatorio">*</span></strong></label>
+          <label><strong>Equipe (opcional)</strong></label>
           <select id="novo_equipe_funcionario">
-            <option value="">-- Selecione a equipe --</option>
+            <option value="">-- Selecione a equipe (opcional) --</option>
           </select>
         </div>
 
@@ -108,7 +156,9 @@
         <h2>Detalhes do funcionário</h2>
         <div style="margin-top: 20px;">
           <div class="info-grupo"><strong>Nome:</strong> <span id="detalhe_nome">-</span></div>
+          <div class="info-grupo"><strong>Número funcional:</strong> <span id="detalhe_numero_funcional">-</span></div>
           <div class="info-grupo"><strong>Cargo:</strong> <span id="detalhe_cargo">-</span></div>
+          <div class="info-grupo"><strong>Classificação funcional:</strong> <span id="detalhe_classificacao">-</span></div>
           <div class="info-grupo"><strong>Registro profissional:</strong> <span id="detalhe_registro">-</span></div>
           <div class="info-grupo"><strong>Especialização:</strong> <span id="detalhe_especializacao">-</span></div>
           <div class="info-grupo"><strong>Equipe:</strong> <span id="detalhe_equipe">-</span></div>
@@ -126,6 +176,9 @@
           <label><strong>Nome completo<span class="obrigatorio">*</span></strong></label>
           <input type="text" id="edit_nome_funcionario" required>
 
+          <label><strong>Número funcional<span class="obrigatorio">*</span></strong></label>
+          <input type="text" id="edit_numero_funcional_funcionario" required>
+
           <label><strong>Cargo<span class="obrigatorio">*</span></strong></label>
           <select id="edit_cargo_funcionario" required onchange="atualizar_campo_registro_edicao()">
             <option value="">-- Selecione o cargo --</option>
@@ -137,13 +190,16 @@
             <option value="Outro">Outro</option>
           </select>
 
+          <label><strong>Classificação funcional</strong></label>
+          <input type="text" id="edit_classificacao_funcionario">
+
           <div id="container_registro_profissional_edit" class="oculto form-cadastro" style="padding: 0;">
-            <label><strong id="label_registro_profissional_edit">Registro profissional<span class="obrigatorio">*</span></strong></label>
+            <label><strong id="label_registro_profissional_edit">Registro profissional (opcional)</strong></label>
             <input type="text" id="edit_registro_funcionario">
           </div>
 
-          <label><strong>Especialização<span class="obrigatorio">*</span></strong></label>
-          <input type="text" id="edit_especializacao_funcionario" required>
+          <label><strong>Especialização (opcional)</strong></label>
+          <input type="text" id="edit_especializacao_funcionario">
 
           <label><strong>Unidade</strong></label>
           <select id="edit_unidade_funcionario" onchange="carregar_equipes_da_unidade_edicao()">
@@ -151,9 +207,9 @@
           </select>
 
           <div id="container_equipe_funcionario_edit" class="oculto form-cadastro" style="padding: 0;">
-            <label><strong>Equipe<span class="obrigatorio">*</span></strong></label>
+            <label><strong>Equipe (opcional)</strong></label>
             <select id="edit_equipe_funcionario">
-              <option value="">-- Selecione a equipe --</option>
+              <option value="">-- Selecione a equipe (opcional) --</option>
             </select>
           </div>
 
@@ -167,6 +223,28 @@
         </form>
       </div>
 
+    </div>
+  </div>
+  
+  <!-- MODAL DE IMPORTAÇÃO DE FUNCIONÁRIOS -->
+  <div id="modal_importacao_funcionarios" class="modal-overlay oculto">
+    <div class="modal-card" style="max-width: 600px;">
+      <span class="modal-fechar" onclick="fechar_modal_importacao()">&times;</span>
+      <h2>Importar Funcionários via Excel</h2>
+      <div style="margin-top: 16px;" class="form-cadastro">
+        <label><strong>Selecione o arquivo Excel (.xlsx ou .xls)</strong></label>
+        <input type="file" id="arquivo_excel_input" accept=".xlsx, .xls" onchange="processar_arquivo_selecionado(event)">
+        
+        <div id="container_resultado_importacao" class="oculto" style="margin-top: 12px; max-height: 200px; overflow-y: auto; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
+          <p id="status_importacao_texto" style="font-size: 14px; font-weight: 500;"></p>
+          <ul id="lista_erros_importacao" style="font-size: 13px; color: #ef4444; padding-left: 16px; margin-top: 6px;"></ul>
+        </div>
+
+        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+          <button type="button" style="background-color: #64748b; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="fechar_modal_importacao()">Cancelar</button>
+          <button type="button" id="btn_confirmar_importacao" class="btn-principal" onclick="confirmar_importacao_banco()" disabled>Gravar no Sistema</button>
+        </div>
+      </div>
     </div>
   </div>
 

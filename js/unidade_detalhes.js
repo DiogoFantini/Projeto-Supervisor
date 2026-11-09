@@ -1,5 +1,6 @@
 let unidade_id = null;
 let lista_equipes_unidade = [];
+let lista_funcs_sem_equipe = [];
 let modo_desvincular_ativo = false;
 let equipe_selecionada_para_desvincular = null;
 
@@ -31,6 +32,7 @@ async function carregar_dados_unidade() {
 
   document.getElementById('titulo_unidade').innerText = unidade.nome;
 
+  // Carrega equipes vinculadas
   const { data: equipes, error: errEquipes } = await _supabase
     .from('equipes')
     .select('*')
@@ -44,6 +46,83 @@ async function carregar_dados_unidade() {
 
   lista_equipes_unidade = equipes || [];
   exibir_equipes(lista_equipes_unidade);
+
+  // Carrega funcionários vinculados à unidade que NÃO possuem equipe
+  const { data: funcionarios, error: errFuncs } = await _supabase
+    .from('funcionarios')
+    .select('id, nome, cargo, numero_funcional, equipe_id, unidade_id')
+    .eq('unidade_id', unidade_id)
+    .is('equipe_id', null)
+    .order('nome', { ascending: true });
+
+  if (errFuncs) {
+    console.error('Erro ao carregar funcionários sem equipe:', errFuncs);
+    lista_funcs_sem_equipe = [];
+  } else {
+    lista_funcs_sem_equipe = funcionarios || [];
+  }
+
+  atualizar_estado_dropdown_funcionarios(lista_funcs_sem_equipe);
+}
+
+function atualizar_estado_dropdown_funcionarios(lista) {
+  const btnDropdown = document.getElementById('btn_dropdown_funcs');
+  const tituloDropdown = document.getElementById('titulo_dropdown_funcs');
+  const conteudoDropdown = document.getElementById('conteudo_dropdown_funcs');
+
+  tituloDropdown.innerText = `Funcionários sem equipe (${lista.length})`;
+
+  if (lista.length > 0) {
+    btnDropdown.removeAttribute('disabled');
+    renderizar_lista_funcs_dropdown(lista);
+  } else {
+    btnDropdown.setAttribute('disabled', 'true');
+    conteudoDropdown.classList.add('oculto');
+  }
+}
+
+function alternar_dropdown_funcionarios() {
+  const conteudoDropdown = document.getElementById('conteudo_dropdown_funcs');
+  conteudoDropdown.classList.toggle('oculto');
+}
+
+function renderizar_lista_funcs_dropdown(lista) {
+  const ul = document.getElementById('lista_funcs_sem_equipe');
+  if (!ul) return;
+  ul.innerHTML = '';
+
+  if (lista.length === 0) {
+    ul.innerHTML = '<li style="text-align: center; color: #64748b; padding: 8px;">Nenhum funcionário encontrado.</li>';
+    return;
+  }
+
+  lista.forEach(f => {
+    const nome_seguro = sanitizar_texto(f.nome);
+    const cargo_seguro = sanitizar_texto(f.cargo || 'Sem cargo');
+    const nf_seguro = sanitizar_texto(f.numero_funcional ? `(NF: ${f.numero_funcional})` : '');
+
+    ul.innerHTML += `
+      <li class="item-func-dropdown">
+        <span><strong>${nome_seguro}</strong> ${nf_seguro}</span>
+        <span class="cargo">${cargo_seguro}</span>
+      </li>
+    `;
+  });
+}
+
+function filtrar_funcionarios_sem_equipe() {
+  const campoBusca = document.getElementById('campo_busca_funcs_sem_equipe');
+  if (!campoBusca) return;
+  const termo = campoBusca.value.toLowerCase().trim();
+
+  const filtrados = lista_funcs_sem_equipe.filter(f => {
+    const bate_nome = f.nome ? f.nome.toLowerCase().includes(termo) : false;
+    const bate_cargo = f.cargo ? f.cargo.toLowerCase().includes(termo) : false;
+    const bate_nf = f.numero_funcional ? f.numero_funcional.toLowerCase().includes(termo) : false;
+    return bate_nome || bate_cargo || bate_nf;
+  });
+
+  renderizar_lista_funcs_dropdown(filtrados);
 }
 
 function alternar_modo_desvincular() {

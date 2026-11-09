@@ -5,7 +5,7 @@ let funcionario_atual = null;
 async function carregar_funcionarios() {
   const { data, error } = await _supabase
     .from('funcionarios')
-    .select('*, equipes(id, nome, unidade_id, unidades(id, nome)))')
+    .select('*, unidades(id, nome), equipes(id, nome, unidade_id, unidades(id, nome)))')
     .order('created_at', { ascending: false });
 
   if (error) return console.error('Erro ao buscar funcionários:', error);
@@ -20,21 +20,29 @@ function exibir_funcionarios(lista) {
   tbody.innerHTML = '';
 
   if (lista.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #64748b;">Nenhum funcionário encontrado.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #64748b;">Nenhum funcionário encontrado.</td></tr>';
     return;
   }
 
   lista.forEach(f => {
     const nome_seguro = sanitizar_texto(f.nome);
+    const num_funcional_seguro = sanitizar_texto(f.numero_funcional || '-');
     const cargo_seguro = sanitizar_texto(f.cargo || '-');
+    const class_funcional_segura = sanitizar_texto(f.regime || '-');
     const esp_segura = sanitizar_texto(f.especializacao || '-');
-    const nome_equipe_seguro = sanitizar_texto(f.equipes?.nome || '-');
-    const nome_unidade_seguro = sanitizar_texto(f.equipes?.unidades?.nome || '-');
+    
+    const nome_unidade_direta = f.unidades?.nome;
+    const nome_unidade_equipe = f.equipes?.unidades?.nome;
+    const nome_unidade_seguro = sanitizar_texto(nome_unidade_direta || nome_unidade_equipe || '-');
+    
+    const nome_equipe_seguro = sanitizar_texto(f.equipes?.nome || 'Sem equipe');
 
     tbody.innerHTML += `
       <tr>
         <td><strong>${nome_seguro}</strong></td>
+        <td>${num_funcional_seguro}</td>
         <td>${cargo_seguro}</td>
+        <td>${class_funcional_segura}</td>
         <td>${esp_segura}</td>
         <td>${nome_equipe_seguro}</td>
         <td>${nome_unidade_seguro}</td>
@@ -57,17 +65,18 @@ function filtrar_funcionarios() {
   const termo = campoBusca.value.toLowerCase().trim();
 
   const filtrados = lista_funcionarios_todos.filter(f => {
+    const nome_unidade = f.unidades?.nome || f.equipes?.unidades?.nome || '';
     const nome_equipe = f.equipes?.nome || '';
-    const nome_unidade = f.equipes?.unidades?.nome || '';
 
     const bate_nome = f.nome ? f.nome.toLowerCase().includes(termo) : false;
+    const bate_num_funcional = f.numero_funcional ? f.numero_funcional.toLowerCase().includes(termo) : false;
     const bate_cargo = f.cargo ? f.cargo.toLowerCase().includes(termo) : false;
-    const bate_registro = f.registro_profissional ? f.registro_profissional.toLowerCase().includes(termo) : false;
+    const bate_regime = f.regime ? f.regime.toLowerCase().includes(termo) : false;
     const bate_especializacao = f.especializacao ? f.especializacao.toLowerCase().includes(termo) : false;
     const bate_equipe = nome_equipe ? nome_equipe.toLowerCase().includes(termo) : false;
     const bate_unidade = nome_unidade ? nome_unidade.toLowerCase().includes(termo) : false;
 
-    return bate_nome || bate_cargo || bate_registro || bate_especializacao || bate_equipe || bate_unidade;
+    return bate_nome || bate_num_funcional || bate_cargo || bate_regime || bate_especializacao || bate_equipe || bate_unidade;
   });
 
   exibir_funcionarios(filtrados);
@@ -76,12 +85,16 @@ function filtrar_funcionarios() {
 function abrir_modal_detalhes(funcionario) {
   funcionario_atual = funcionario;
 
+  const nome_unidade = funcionario.unidades?.nome || funcionario.equipes?.unidades?.nome || '-';
+
   document.getElementById('detalhe_nome').innerText = funcionario.nome || '-';
+  document.getElementById('detalhe_numero_funcional').innerText = funcionario.numero_funcional || '-';
   document.getElementById('detalhe_cargo').innerText = funcionario.cargo || '-';
+  document.getElementById('detalhe_classificacao').innerText = funcionario.regime || '-';
   document.getElementById('detalhe_registro').innerText = funcionario.registro_profissional || '-';
   document.getElementById('detalhe_especializacao').innerText = funcionario.especializacao || '-';
-  document.getElementById('detalhe_equipe').innerText = funcionario.equipes?.nome || '-';
-  document.getElementById('detalhe_unidade').innerText = funcionario.equipes?.unidades?.nome || '-';
+  document.getElementById('detalhe_equipe').innerText = funcionario.equipes?.nome || 'Sem equipe';
+  document.getElementById('detalhe_unidade').innerText = nome_unidade;
 
   document.getElementById('modo_visualizacao_funcionario').classList.remove('oculto');
   document.getElementById('modo_edicao_funcionario').classList.add('oculto');
@@ -100,7 +113,9 @@ async function ativar_modo_edicao_funcionario() {
   if (!funcionario_atual) return;
 
   document.getElementById('edit_nome_funcionario').value = funcionario_atual.nome || '';
+  document.getElementById('edit_numero_funcional_funcionario').value = funcionario_atual.numero_funcional || '';
   document.getElementById('edit_cargo_funcionario').value = funcionario_atual.cargo || '';
+  document.getElementById('edit_classificacao_funcionario').value = funcionario_atual.regime || '';
   document.getElementById('edit_registro_funcionario').value = funcionario_atual.registro_profissional || '';
   document.getElementById('edit_especializacao_funcionario').value = funcionario_atual.especializacao || '';
 
@@ -127,17 +142,17 @@ function atualizar_campo_registro() {
 
   const cargo = cargoSelect.value;
   const mapeamentoRegistros = {
-    'Médico(a)': { label: 'CRM:', placeholder: 'Ex: CRM/SP 123456' },
-    'Enfermeiro(a)': { label: 'COREN:', placeholder: 'Ex: COREN-SP 123456' },
-    'Técnico(a) de Enfermagem': { label: 'COREN:', placeholder: 'Ex: COREN-SP 123456' },
-    'Auxiliar de Enfermagem': { label: 'COREN:', placeholder: 'Ex: COREN-SP 123456' },
-    'Dentista': { label: 'CRO:', placeholder: 'Ex: CRO-SP 123456' }
+    'Médico(a)': { label: 'CRM (opcional):', placeholder: 'Ex: CRM/SP 123456' },
+    'Enfermeiro(a)': { label: 'COREN (opcional):', placeholder: 'Ex: COREN-SP 123456' },
+    'Técnico(a) de Enfermagem': { label: 'COREN (opcional):', placeholder: 'Ex: COREN-SP 123456' },
+    'Auxiliar de Enfermagem': { label: 'COREN (opcional):', placeholder: 'Ex: COREN-SP 123456' },
+    'Dentista': { label: 'CRO (opcional):', placeholder: 'Ex: CRO-SP 123456' }
   };
 
   if (mapeamentoRegistros[cargo]) {
-    label.innerHTML = `<strong>${mapeamentoRegistros[cargo].label}<span class="obrigatorio">*</span></strong>`;
+    label.innerHTML = `<strong>${mapeamentoRegistros[cargo].label}</strong>`;
     input.placeholder = mapeamentoRegistros[cargo].placeholder;
-    input.required = true;
+    input.required = false;
     container.classList.remove('oculto');
   } else {
     input.value = '';
@@ -156,17 +171,17 @@ function atualizar_campo_registro_edicao() {
 
   const cargo = cargoSelect.value;
   const mapeamentoRegistros = {
-    'Médico(a)': { label: 'CRM:', placeholder: 'Ex: CRM/SP 123456' },
-    'Enfermeiro(a)': { label: 'COREN:', placeholder: 'Ex: COREN-SP 123456' },
-    'Técnico(a) de Enfermagem': { label: 'COREN:', placeholder: 'Ex: COREN-SP 123456' },
-    'Auxiliar de Enfermagem': { label: 'COREN:', placeholder: 'Ex: COREN-SP 123456' },
-    'Dentista': { label: 'CRO:', placeholder: 'Ex: CRO-SP 123456' }
+    'Médico(a)': { label: 'CRM (opcional):', placeholder: 'Ex: CRM/SP 123456' },
+    'Enfermeiro(a)': { label: 'COREN (opcional):', placeholder: 'Ex: COREN-SP 123456' },
+    'Técnico(a) de Enfermagem': { label: 'COREN (opcional):', placeholder: 'Ex: COREN-SP 123456' },
+    'Auxiliar de Enfermagem': { label: 'COREN (opcional):', placeholder: 'Ex: COREN-SP 123456' },
+    'Dentista': { label: 'CRO (opcional):', placeholder: 'Ex: CRO-SP 123456' }
   };
 
   if (mapeamentoRegistros[cargo]) {
-    label.innerHTML = `<strong>${mapeamentoRegistros[cargo].label}<span class="obrigatorio">*</span></strong>`;
+    label.innerHTML = `<strong>${mapeamentoRegistros[cargo].label}</strong>`;
     input.placeholder = mapeamentoRegistros[cargo].placeholder;
-    input.required = true;
+    input.required = false;
     container.classList.remove('oculto');
   } else {
     input.value = '';
@@ -224,7 +239,7 @@ async function carregar_equipes_da_unidade() {
 
   if (!unidadeId) {
     containerEquipe.classList.add('oculto');
-    selectEquipe.innerHTML = '<option value="">-- Selecione a equipe --</option>';
+    selectEquipe.innerHTML = '<option value="">-- Selecione a equipe (opcional) --</option>';
     selectEquipe.value = '';
     selectEquipe.required = false;
     return;
@@ -232,7 +247,7 @@ async function carregar_equipes_da_unidade() {
 
   selectEquipe.innerHTML = '<option value="">Carregando equipes...</option>';
   containerEquipe.classList.remove('oculto');
-  selectEquipe.required = true;
+  selectEquipe.required = false;
 
   const { data: equipes, error } = await _supabase
     .from('equipes')
@@ -242,7 +257,7 @@ async function carregar_equipes_da_unidade() {
 
   if (error) return console.error('Erro ao carregar equipes:', error);
 
-  selectEquipe.innerHTML = '<option value="">-- Selecione a equipe --</option>';
+  selectEquipe.innerHTML = '<option value="">-- Selecione a equipe (opcional) --</option>';
 
   if (!equipes || equipes.length === 0) {
     selectEquipe.innerHTML = '<option value="">Nenhuma equipe cadastrada nesta unidade</option>';
@@ -274,7 +289,7 @@ async function carregar_unidades_select_edicao() {
     selectUnidade.innerHTML += `<option value="${u.id}">${nome_seguro}</option>`;
   });
 
-  const unidadeAtualId = funcionario_atual.equipes?.unidade_id || funcionario_atual.equipes?.unidades?.id;
+  const unidadeAtualId = funcionario_atual.unidade_id || funcionario_atual.equipes?.unidade_id || funcionario_atual.equipes?.unidades?.id;
   selectUnidade.value = unidadeAtualId || '';
 
   await carregar_equipes_da_unidade_edicao();
@@ -287,7 +302,7 @@ async function carregar_equipes_da_unidade_edicao() {
 
   if (!unidadeId) {
     containerEquipe.classList.add('oculto');
-    selectEquipe.innerHTML = '<option value="">-- Selecione a equipe --</option>';
+    selectEquipe.innerHTML = '<option value="">-- Selecione a equipe (opcional) --</option>';
     selectEquipe.value = '';
     selectEquipe.required = false;
     return;
@@ -295,7 +310,7 @@ async function carregar_equipes_da_unidade_edicao() {
 
   selectEquipe.innerHTML = '<option value="">Carregando equipes...</option>';
   containerEquipe.classList.remove('oculto');
-  selectEquipe.required = true;
+  selectEquipe.required = false;
 
   const { data: equipes, error } = await _supabase
     .from('equipes')
@@ -305,7 +320,7 @@ async function carregar_equipes_da_unidade_edicao() {
 
   if (error) return console.error('Erro ao carregar equipes:', error);
 
-  selectEquipe.innerHTML = '<option value="">-- Selecione a equipe --</option>';
+  selectEquipe.innerHTML = '<option value="">-- Selecione a equipe (opcional) --</option>';
 
   if (!equipes || equipes.length === 0) {
     selectEquipe.innerHTML = '<option value="">Nenhuma equipe cadastrada nesta unidade</option>';
@@ -346,17 +361,22 @@ document.addEventListener('DOMContentLoaded', () => {
     formCadastro.addEventListener('submit', async (e) => {
       e.preventDefault();
       const nome = document.getElementById('novo_nome_funcionario').value;
+      const numero_funcional = document.getElementById('novo_numero_funcional_funcionario').value;
       const cargoSelecionado = document.getElementById('novo_cargo_funcionario').value;
+      const classificacao = document.getElementById('novo_classificacao_funcionario').value;
       const registro = document.getElementById('novo_registro_funcionario').value;
       const especializacao = document.getElementById('nova_especializacao_funcionario').value;
-      const unidadeId = document.getElementById('novo_unidade_funcionario').value;
-      const equipeId = unidadeId ? (document.getElementById('novo_equipe_funcionario').value || null) : null;
+      const unidadeId = document.getElementById('novo_unidade_funcionario').value || null;
+      const equipeId = document.getElementById('novo_equipe_funcionario').value || null;
 
       const { error } = await _supabase.from('funcionarios').insert([{
-        nome,
+        nome: nome.trim(),
+        numero_funcional: numero_funcional.trim(),
         cargo: cargoSelecionado,
-        registro_profissional: registro || null,
-        especializacao,
+        regime: classificacao ? classificacao.trim() : null,
+        registro_profissional: registro ? registro.trim() : null,
+        especializacao: especializacao ? especializacao.trim() : null,
+        unidade_id: unidadeId,
         equipe_id: equipeId
       }]);
 
@@ -376,19 +396,24 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!funcionario_atual) return;
 
       const nome = document.getElementById('edit_nome_funcionario').value;
+      const numero_funcional = document.getElementById('edit_numero_funcional_funcionario').value;
       const cargoSelecionado = document.getElementById('edit_cargo_funcionario').value;
+      const classificacao = document.getElementById('edit_classificacao_funcionario').value;
       const registro = document.getElementById('edit_registro_funcionario').value;
       const especializacao = document.getElementById('edit_especializacao_funcionario').value;
-      const unidadeId = document.getElementById('edit_unidade_funcionario').value;
-      const equipeId = unidadeId ? (document.getElementById('edit_equipe_funcionario').value || null) : null;
+      const unidadeId = document.getElementById('edit_unidade_funcionario').value || null;
+      const equipeId = document.getElementById('edit_equipe_funcionario').value || null;
 
       const { error } = await _supabase
         .from('funcionarios')
         .update({
-          nome,
+          nome: nome.trim(),
+          numero_funcional: numero_funcional.trim(),
           cargo: cargoSelecionado,
-          registro_profissional: registro || null,
-          especializacao,
+          regime: classificacao ? classificacao.trim() : null,
+          registro_profissional: registro ? registro.trim() : null,
+          especializacao: especializacao ? especializacao.trim() : null,
+          unidade_id: unidadeId,
           equipe_id: equipeId
         })
         .eq('id', funcionario_atual.id);

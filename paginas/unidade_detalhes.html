@@ -13,6 +13,7 @@
   <title>Detalhes da unidade</title>
   <link rel="stylesheet" href="../css/css_barra_lateral.css">
   <link rel="stylesheet" href="../css/css_estilo_global_tabelas.css">
+  <link rel="stylesheet" href="../css/css_unidade_detalhes.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
   <script src="../js/autenticacao.js" crossorigin="anonymous"></script>
   <script src="../js/barra_lateral.js" crossorigin="anonymous"></script>
@@ -30,11 +31,34 @@
           type="text" 
           id="campo_busca_equipe" 
           class="campo-busca" 
-          placeholder="Buscar equipe nesta unidade..." 
+          placeholder="Pesquisar equipes..." 
           oninput="filtrar_equipes()"
         >
         <button type="button" class="btn-principal" onclick="abrir_modal_vincular_equipe()">+ Vincular equipe à unidade</button>
         <button type="button" id="btn_modo_desvincular" class="btn-perigo" onclick="alternar_modo_desvincular()">Desvincular equipe</button>
+      </div>
+    </div>
+
+    <!-- DROPDOWN DE FUNCIONÁRIOS SEM EQUIPE -->
+    <div id="container_dropdown_funcs" class="dropdown-funcionarios-container desativado">
+      <button type="button" id="btn_dropdown_funcs" class="dropdown-toggle" onclick="alternar_dropdown_funcionarios()" disabled>
+        <span id="titulo_dropdown_funcs">Funcionários sem equipe (0)</span>
+        <span id="icone_seta" class="seta">▼</span>
+      </button>
+      
+      <div id="conteudo_dropdown_funcs" class="dropdown-conteudo oculto">
+        <div class="dropdown-busca-wrapper">
+          <input 
+            type="text" 
+            id="campo_busca_funcs_sem_equipe" 
+            class="campo-busca-dropdown" 
+            placeholder="Pesquisar funcionário sem equipe..." 
+            oninput="filtrar_funcionarios_sem_equipe()"
+          >
+        </div>
+        <ul id="lista_funcs_sem_equipe" class="lista-funcs-dropdown">
+          <!-- Preenchido via JS -->
+        </ul>
       </div>
     </div>
 

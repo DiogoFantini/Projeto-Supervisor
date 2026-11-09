@@ -10,35 +10,117 @@
     style-src 'self' 'unsafe-inline';
     img-src 'self' data:;
   ">
-  <title>Login - Gestão de Funcionários</title>
+  <title>Login - Gestão e Monitoramento de Equipes</title>
   <link rel="stylesheet" href="../css/css_login.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
   <script src="../js/autenticacao.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
-  <div class="card">
-    <h2>Entrar no Sistema</h2>
-    <form id="form_login">
-      <input type="email" id="login_email" placeholder="Seu E-mail" required autocomplete="email">
-      <input type="password" id="login_senha" placeholder="Sua Senha" required autocomplete="current-password">
-      <button type="submit">Entrar</button>
-    </form>
+  <div class="container-login">
+    
+    <!-- ÁREA SUPERIOR: ILUSTRAÇÃO E SUBTÍTULO DA LOGO -->
+    <div class="cabecalho-login">
+      <div class="wrapper-ilustracao">
+        <!-- Substitua a imagem abaixo pelo caminho da sua ilustração quando desejar -->
+        <img 
+          src="../assets/ilustracao_login.png" 
+          alt="Ilustração de Gestão" 
+          class="imagem-ilustracao" 
+          onerror="this.style.display='none'; document.getElementById('placeholder_imagem').style.display='flex';"
+        >
+      </div>
+      <p class="subtitulo-sistema">Gestão e Monitoramento de Equipes</p>
+    </div>
+
+    <!-- CARTÃO DO FORMULÁRIO DE LOGIN -->
+    <div class="card-login">
+      <form id="form_login">
+        
+        <div class="grupo-campo">
+          <label for="login_email">Email <span class="obrigatorio">*</span></label>
+          <input 
+            type="email" 
+            id="login_email" 
+            placeholder="Digite seu email" 
+            required 
+            autocomplete="email"
+          >
+        </div>
+
+        <div class="grupo-campo">
+          <label for="login_senha">Senha <span class="obrigatorio">*</span></label>
+          <input 
+            type="password" 
+            id="login_senha" 
+            placeholder="Digite sua senha" 
+            required 
+            autocomplete="current-password"
+          >
+        </div>
+
+        <div class="grupo-lembrar">
+          <input type="checkbox" id="lembrar_de_mim">
+          <label for="lembrar_de_mim">Lembrar de mim</label>
+        </div>
+
+        <button type="submit" class="btn-entrar">Entrar</button>
+      </form>
+    </div>
+
+    <!-- NAVEGAÇÃO E RECUPERAÇÃO DE SENHA -->
+    <div class="rodape-login">
+      <a href="#" class="link-esqueci-senha" onclick="solicitar_recuperacao_senha(event)">Esqueci a senha?</a>
+    </div>
+
   </div>
 
   <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Preenche o email automaticamente se o "Lembrar de mim" foi marcado anteriormente
+      const email_salvo = localStorage.getItem('lembrar_email_usuario');
+      if (email_salvo) {
+        document.getElementById('login_email').value = email_salvo;
+        document.getElementById('lembrar_de_mim').checked = true;
+      }
+    });
+
     document.getElementById('form_login').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('login_email').value;
       const password = document.getElementById('login_senha').value;
+      const lembrar = document.getElementById('lembrar_de_mim').checked;
+
+      if (lembrar) {
+        localStorage.setItem('lembrar_email_usuario', email);
+      } else {
+        localStorage.removeItem('lembrar_email_usuario');
+      }
 
       const { error } = await _supabase.auth.signInWithPassword({ email, password });
+      
       if (error) {
         alert('Erro ao entrar: ' + error.message);
       } else {
         window.location.href = 'unidades.html';
       }
     });
+
+    async function solicitar_recuperacao_senha(event) {
+      event.preventDefault();
+      const email = prompt('Digite o seu email cadastrado para redefinição de senha:');
+      if (!email) return;
+
+      const { error } = await _supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/paginas/redefinir_senha.html',
+      });
+
+      if (error) {
+        alert('Erro ao solicitar redefinição: ' + error.message);
+      } else {
+        alert('Email de redefinição enviado com sucesso! Verifique sua caixa de entrada.');
+      }
+    }
   </script>
 </body>
 </html>
