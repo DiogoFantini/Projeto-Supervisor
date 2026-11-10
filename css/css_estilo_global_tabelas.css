@@ -27,26 +27,25 @@ h1, h2, h3 {
    LAYOUT PRINCIPAL & RESPONSIVIDADE DINÂMICA
    ========================================================================== */
 .conteudo-principal {
-  margin-left: 220px;
+  margin-left: 260px;
+  width: calc(100% - 260px);
   padding: 32px 40px;
+  max-width: 100%;
   min-height: 100vh;
   box-sizing: border-box;
-  width: calc(100% - 220px);
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-              width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              padding 0.3s ease;
+              width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Modo compacto (70px) quando a barra lateral é recolhida */
 body.barra-recolhida .conteudo-principal {
-  margin-left: 0;
-  width: 100%;
-  padding-top: 60px;
+  margin-left: 70px;
+  width: calc(100% - 70px);
 }
 
 .cabecalho-pagina,
 .container-tabela,
 .btn-voltar {
-  max-width: 1100px;
   width: 100%;
   margin-left: auto;
   margin-right: auto;
@@ -68,7 +67,7 @@ body.barra-recolhida .conteudo-principal {
 }
 
 /* ==========================================================================
-   CABEÇALHO E CONTROLES DE BUSCA/FILTRO
+   CABEÇALHO E CONTROLES DE BUSCA/FILTRO (LUPA SVG PROFISSIONAL)
    ========================================================================== */
 .cabecalho-pagina {
   display: flex;
@@ -86,12 +85,29 @@ body.barra-recolhida .conteudo-principal {
   flex-wrap: wrap;
 }
 
+.wrapper-campo-busca {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.wrapper-campo-busca .icone-lupa {
+  position: absolute;
+  left: 12px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.wrapper-campo-busca .campo-busca {
+  padding-left: 38px;
+}
+
 .campo-busca {
-  padding: 10px 14px;
+  padding: 11px 14px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 14px;
-  min-width: 200px;
+  width: 280px;
   background-color: #ffffff;
   box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -103,6 +119,11 @@ body.barra-recolhida .conteudo-principal {
   box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
 }
 
+.wrapper-campo-busca .campo-busca:focus + .icone-lupa,
+.wrapper-campo-busca:focus-within .icone-lupa {
+  color: #0284c7;
+}
+
 /* ==========================================================================
    BOTÕES PADRONIZADOS
    ========================================================================== */
@@ -111,7 +132,7 @@ body.barra-recolhida .conteudo-principal {
 .btn-perigo,
 .btn-secundario {
   border: none;
-  padding: 10px 18px;
+  padding: 12px 20px;
   border-radius: 6px;
   font-size: 14px;
   font-weight: 600;
@@ -175,14 +196,15 @@ body.barra-recolhida .conteudo-principal {
 .btn-x-remocao:hover { background-color: #dc2626; }
 
 /* ==========================================================================
-   ESTILOS DE MOLDURA E ESTRUTURA DAS TABELAS
+   ESTILOS DE MOLDURA E ESTRUTURA DAS TABELAS (BASE UNIDADES)
    ========================================================================== */
 .container-tabela {
-  overflow-x: auto;
-  border-radius: 10px;
-  border: 1px solid #cbd5e1;
+  width: 100%;
   background-color: #ffffff;
-  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 table {
@@ -194,13 +216,11 @@ table {
 
 th, td {
   border-bottom: 1px solid #e2e8f0;
-  padding: 16px 20px;
+  padding: 14px 16px;
   font-size: 14px;
   vertical-align: middle;
-  white-space: nowrap;
 }
 
-/* Divisórias verticais entre colunas */
 th:not(:last-child),
 td:not(:last-child) {
   border-right: 1px solid #e2e8f0;
@@ -210,7 +230,6 @@ th {
   background-color: #f8fafc;
   font-weight: 600;
   color: #475569;
-  border-bottom: 2px solid #cbd5e1;
 }
 
 tr:hover td {
@@ -235,7 +254,7 @@ tr:last-child td {
 .nome-equipe-link {
   color: #0284c7;
   text-decoration: underline;
-  font-weight: 600;
+  font-weight: bold;
 }
 
 .nome-unidade-link:hover,
@@ -265,22 +284,22 @@ tr:last-child td {
 .modal-card {
   background-color: #ffffff;
   width: 100%;
-  max-width: 520px;
+  max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
   padding: 24px;
-  border-radius: 10px;
+  border-radius: 8px;
   position: relative;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .modal-fechar {
   position: absolute;
-  top: 16px;
+  top: 12px;
   right: 16px;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: bold;
-  color: #94a3b8;
+  color: #64748b;
   cursor: pointer;
   line-height: 1;
 }
@@ -296,13 +315,12 @@ tr:last-child td {
 .form-cadastro,
 .form-edicao {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .form-cadastro label,
 .form-edicao label {
   font-size: 14px;
-  font-weight: 500;
   color: #334155;
 }
 
@@ -311,7 +329,7 @@ tr:last-child td {
 .form-edicao input,
 .form-edicao select {
   width: 100%;
-  padding: 11px 14px;
+  padding: 12px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 14px;
@@ -344,10 +362,11 @@ tr:last-child td {
 }
 
 /* ==========================================================================
-   RESPONSIVIDADE
+   RESPONSIVIDADE EM TELAS MENORES / DISPOSITIVOS MÓVEIS
    ========================================================================== */
 @media (max-width: 992px) {
-  .conteudo-principal {
+  .conteudo-principal,
+  body.barra-recolhida .conteudo-principal {
     margin-left: 0;
     width: 100%;
     padding: 20px 16px;

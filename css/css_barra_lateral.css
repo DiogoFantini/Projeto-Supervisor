@@ -1,134 +1,157 @@
-* {
-  box-sizing: border-box;
-}
+/* ==========================================================================
+   ESTILOS DA BARRA LATERAL (PALETA DO LOGIN + MODO COMPACTO INTEGRADO)
+   ========================================================================== */
 
-body {
-  display: flex;
-  min-height: 100vh;
-  margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
-  background-color: #f1f5f9;
-  color: #0f172a;
-}
-
-/* BARRA LATERAL FIXA */
+/* Container da Barra Lateral */
 .barra-lateral {
   position: fixed;
   top: 0;
   left: 0;
-  width: 220px;
+  width: 260px;
   height: 100vh;
-  background-color: #0b132b;
-  color: #ffffff;
+  background-color: #1e293b; /* Tom slate/cinza-azulado da ilustração de login */
+  color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   padding: 24px 16px;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  z-index: 100;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 999;
+  box-shadow: 2px 0 12px rgba(15, 23, 42, 0.15);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.conteudo-barra-lateral {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+/* Estado Recolhido: Vira menu compacto de ícones (70px) */
+body.barra-recolhida .barra-lateral {
+  width: 70px;
+  padding: 24px 10px;
 }
 
+/* Cabeçalho da Barra Lateral */
 .cabecalho-barra-lateral {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #334155;
-  height: 32px;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(241, 245, 249, 0.1);
+  margin-bottom: 20px;
+  min-height: 32px;
 }
 
-.barra-lateral h2,
+body.barra-recolhida .cabecalho-barra-lateral {
+  justify-content: center;
+}
+
 .titulo-sistema {
-  color: #f8fafc;
-  font-size: 18px;
-  margin: 0;
+  font-size: 20px;
   font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity 0.2s ease;
 }
 
-/* BOTÃO FIXO DE ALTERNAR A BARRA */
-.btn-alternar-barra {
-  position: fixed;
-  top: 24px;
-  left: 174px; /* Posicionado perfeitamente no canto da barra aberta */
-  z-index: 101;
-  background-color: #1e293b;
-  color: #94a3b8;
-  border: 1px solid #334155;
+body.barra-recolhida .titulo-sistema {
+  display: none !important;
+}
+
+/* BOTÃO DE RECOLHER/EXPANDIR DENTRO DA BARRA */
+.btn-recolher-sidebar {
+  background-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
   border-radius: 6px;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   font-size: 11px;
-  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-              background-color 0.2s ease, 
-              color 0.2s ease,
-              border-color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  flex-shrink: 0;
 }
 
-.btn-alternar-barra:hover {
+.btn-recolher-sidebar:hover {
   background-color: #0284c7;
-  color: #ffffff;
   border-color: #0284c7;
 }
 
+/* NAVEGAÇÃO E ÍCONES */
 .navegacao-barra-lateral {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
 }
 
-.barra-lateral a,
 .link-navegacao {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
   padding: 12px 14px;
-  color: #94a3b8;
-  text-decoration: none;
-  border-radius: 6px;
-  font-weight: 600;
+  color: #cbd5e1 !important;
+  text-decoration: none !important;
   font-size: 14px;
-  cursor: pointer;
+  font-weight: 600;
+  border-radius: 8px;
   transition: all 0.2s ease;
+  cursor: pointer;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
-.barra-lateral a:hover,
 .link-navegacao:hover {
-  background-color: #1e293b;
-  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #ffffff !important;
 }
 
-.barra-lateral a.active,
-.barra-lateral a.ativo,
-.link-navegacao.ativo,
-.link-navegacao.active {
-  background-color: #0284c7;
-  color: #ffffff;
+.link-navegacao.ativo {
+  background-color: #0284c7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
 }
 
-/* DROPDOWN DE FUNCIONÁRIOS */
+.icone-menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+/* Ocultar textos no modo compacto de ícones */
+body.barra-recolhida .texto-menu,
+body.barra-recolhida .icone-seta {
+  display: none !important;
+}
+
+body.barra-recolhida .link-navegacao {
+  justify-content: center;
+  padding: 12px 0;
+}
+
+/* Dropdown e Subitens */
 .item-dropdown {
   display: flex;
   flex-direction: column;
 }
 
 .btn-dropdown-toggle {
-  width: 100%;
-  box-sizing: border-box;
+  user-select: none;
+  justify-content: space-between;
+}
+
+body.barra-recolhida .btn-dropdown-toggle {
+  justify-content: center;
 }
 
 .icone-seta {
   font-size: 10px;
+  margin-left: auto;
   transition: transform 0.2s ease;
 }
 
@@ -142,55 +165,84 @@ body {
   gap: 4px;
   padding-left: 12px;
   margin-top: 4px;
-  overflow: hidden;
-  transition: max-height 0.3s ease;
+  margin-bottom: 4px;
+}
+
+body.barra-recolhida .menu-subitens {
+  padding-left: 0;
 }
 
 .sublink-navegacao {
-  display: block;
-  padding: 8px 12px;
-  color: #94a3b8;
-  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  color: #94a3b8 !important;
+  text-decoration: none !important;
   font-size: 13px;
   font-weight: 500;
-  border-radius: 4px;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.sublink-navegacao:hover,
-.sublink-navegacao.ativo,
-.sublink-navegacao.active {
-  background-color: rgba(2, 132, 199, 0.2);
-  color: #38bdf8;
-}
-
-.barra-lateral .btn-sair {
-  margin-top: auto;
-  background-color: #ef4444;
-  color: #ffffff;
-  border: none;
-  padding: 12px;
   border-radius: 6px;
-  font-weight: bold;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+body.barra-recolhida .sublink-navegacao {
+  justify-content: center;
+  padding: 9px 0;
+}
+
+.sublink-navegacao:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #ffffff !important;
+}
+
+.sublink-navegacao.ativo {
+  color: #38bdf8 !important;
+  font-weight: 600;
+  background-color: rgba(56, 189, 248, 0.12);
+}
+
+.oculto {
+  display: none !important;
+}
+
+/* ==========================================================================
+   BOTÃO SAIR SOFISTICADO (CORAL DO LOGIN + GHOST BUTTON)
+   ========================================================================== */
+.btn-sair {
+  width: 100%;
+  padding: 11px 16px;
+  margin-top: 16px;
+  background-color: rgba(225, 83, 83, 0.08);
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  text-align: center;
-  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.25s ease;
+  box-sizing: border-box;
+  text-decoration: none !important;
+  white-space: nowrap;
 }
 
-.barra-lateral .btn-sair:hover {
-  background-color: #dc2626;
+body.barra-recolhida .btn-sair {
+  padding: 11px 0;
 }
 
-/* QUANDO A BARRA É RECOLHIDA */
-body.barra-recolhida .barra-lateral {
-  transform: translateX(-100%);
+.btn-sair:hover {
+  background-color: #e15353 !important; /* Cor exata do botão do login */
+  color: #ffffff !important;
+  border-color: #e15353;
+  box-shadow: 0 4px 12px rgba(225, 83, 83, 0.3);
+  transform: translateY(-1px);
 }
 
-/* O BOTÃO PERMANECE NA TELA E DESLIZA PARA O CANTO ESQUERDO */
-body.barra-recolhida .btn-alternar-barra {
-  left: 16px;
-  background-color: #0b132b;
-  color: #ffffff;
-  border-color: #0284c7;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+.btn-sair:active {
+  transform: translateY(0);
 }

@@ -24,13 +24,20 @@
     <div class="cabecalho-pagina">
       <h1>Unidades</h1>
       <div class="acoes-cabecalho">
-        <input 
-          type="text" 
-          id="campo_busca_unidade" 
-          class="campo-busca" 
-          placeholder="🔍" 
-          oninput="filtrar_unidades()"
-        >
+        <!-- CAMPO DE BUSCA COM LUPA SVG PROFISSIONAL -->
+        <div class="wrapper-campo-busca">
+          <svg class="icone-lupa" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input 
+            type="text" 
+            id="campo_busca_unidade" 
+            class="campo-busca" 
+            placeholder="Buscar por unidade..." 
+            oninput="filtrar_unidades()"
+          >
+        </div>
         <button type="button" class="btn-principal" onclick="abrir_modal_cadastro()">+ Adicionar Unidade</button>
       </div>
     </div>
