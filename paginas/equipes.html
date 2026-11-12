@@ -13,10 +13,12 @@
   <title>Gestão de equipes</title>
   <link rel="stylesheet" href="../css/css_barra_lateral.css">
   <link rel="stylesheet" href="../css/css_estilo_global_tabelas.css">
+  <link rel="stylesheet" href="../css/css_unidade_detalhes.css">
+  <link rel="stylesheet" href="../css/css_folgas_abonos.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
   <script src="../js/autenticacao.js" crossorigin="anonymous"></script>
   <script src="../js/barra_lateral.js" crossorigin="anonymous"></script>
-  <script src="../js/cadastrar_equipe.js" defer crossorigin="anonymous"></script>
+  <script type="module" src="../js/navegacao_spa.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -24,7 +26,7 @@
     <div class="cabecalho-pagina">
       <h1>Equipes</h1>
       <div class="acoes-cabecalho">
-        <!-- CAMPO DE BUSCA COM LUPA SVG PROFISSIONAL -->
+        <!-- CAMPO DE BUSCA COM LUPA SVG -->
         <div class="wrapper-campo-busca">
           <svg class="icone-lupa" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"></circle>
@@ -34,11 +36,10 @@
             type="text" 
             id="campo_busca_equipe" 
             class="campo-busca" 
-            placeholder="Buscar por equipe..." 
-            oninput="filtrar_equipes()"
+            placeholder="Buscar por equipe..."
           >
         </div>
-        <button type="button" class="btn-principal" onclick="abrir_modal_cadastro()">+ Adicionar equipe</button>
+        <button type="button" class="btn-principal" data-acao="abrir-modal-cadastro">+ Adicionar equipe</button>
       </div>
     </div>
 
@@ -56,96 +57,95 @@
         <tbody id="tabela_equipes"></tbody>
       </table>
     </div>
-  </main>
 
-  <!-- MODAL DE CADASTRO DE NOVA EQUIPE -->
-  <div id="modal_cadastro_equipe" class="modal-overlay oculto">
-    <div class="modal-card">
-      <span class="modal-fechar" onclick="fechar_modal_cadastro()">&times;</span>
-      <h2>Cadastrar nova equipe</h2>
-      <form id="form_cadastro_equipe" class="form-cadastro" style="margin-top: 16px;">
-        <label><strong>Nome da equipe<span class="obrigatorio">*</span></strong></label>
-        <input type="text" id="novo_nome_equipe" placeholder="Ex: Equipe Alfa" required>
-
-        <label><strong>Descrição / Propósito<span class="obrigatorio">*</span></strong></label>
-        <input type="text" id="nova_descricao_equipe" placeholder="Ex: Manutenção preventiva" required>
-
-        <label><strong>Unidade vinculada</strong></label>
-        <select id="novo_unidade_equipe">
-          <option value="">-- Selecione a unidade (opcional) --</option>
-        </select>
-
-        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px;">
-          <button type="button" style="background-color: #64748b; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="fechar_modal_cadastro()">Cancelar</button>
-          <button type="submit" class="btn-principal">Salvar equipe</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL DE VISUALIZAÇÃO E EDIÇÃO DA EQUIPE -->
-  <div id="modal_equipe" class="modal-overlay oculto">
-    <div class="modal-card">
-      <span class="modal-fechar" onclick="fechar_modal_detalhes()">&times;</span>
-      
-      <!-- MODO VISUALIZAÇÃO -->
-      <div id="modo_visualizacao">
-        <h2 id="modal_nome_equipe"></h2>
-        <p><strong>Descrição:</strong> <span id="modal_descricao_equipe"></span></p>
-        <p><strong>Unidade vinculada:</strong> <span id="modal_unidade_equipe"></span></p>
-        <p><strong>Criada em:</strong> <span id="modal_data_criacao"></span></p>
-        
-        <hr style="margin: 16px 0; border: 0; border-top: 1px solid #e2e8f0;">
-        
-        <h3>Integrantes da equipe</h3>
-        <ul id="modal_lista_membros_vis" class="lista-membros"></ul>
-        
-        <div style="margin-top: 20px; text-align: right;">
-          <button type="button" class="btn-principal" onclick="ativar_modo_edicao()">Editar equipe</button>
-        </div>
-      </div>
-
-      <!-- MODO EDIÇÃO -->
-      <div id="modo_edicao" class="oculto">
-        <h2>Editar equipe</h2>
-        
-        <div class="form-edicao">
+    <!-- MODAL DE CADASTRO DE NOVA EQUIPE -->
+    <div id="modal_cadastro_equipe" class="modal-overlay oculto">
+      <div class="modal-card">
+        <span class="modal-fechar" data-acao="fechar-modal-cadastro">&times;</span>
+        <h2>Cadastrar nova equipe</h2>
+        <form id="form_cadastro_equipe" class="form-cadastro" style="margin-top: 16px;">
           <label><strong>Nome da equipe<span class="obrigatorio">*</span></strong></label>
-          <input type="text" id="edit_nome_equipe" required>
+          <input type="text" id="novo_nome_equipe" placeholder="Ex: Equipe Alfa" required>
 
-          <label><strong>Descrição<span class="obrigatorio">*</span></strong></label>
-          <input type="text" id="edit_descricao_equipe" required>
+          <label><strong>Descrição / Propósito<span class="obrigatorio">*</span></strong></label>
+          <input type="text" id="nova_descricao_equipe" placeholder="Ex: Manutenção preventiva" required>
 
           <label><strong>Unidade vinculada</strong></label>
-          <select id="edit_unidade_equipe">
+          <select id="novo_unidade_equipe">
             <option value="">-- Selecione a unidade (opcional) --</option>
           </select>
 
-          <hr style="margin: 10px 0; border: 0; border-top: 1px solid #e2e8f0;">
-
-          <h3>Gerenciar integrantes</h3>
-          <ul id="modal_lista_membros_edit" class="lista-membros"></ul>
-
-          <label><strong>Vincular funcionário registrado</strong></label>
-          <div class="grupo-adicionar" style="display: flex; gap: 8px; margin-top: 10px;">
-            <select id="select_funcionarios_disponiveis" style="flex: 1;">
-              <option value="">Carregando funcionários...</option>
-            </select>
-            <button type="button" class="btn-principal" onclick="adicionar_membro_equipe()" style="background-color: #16a34a;">Adicionar</button>
+          <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px;">
+            <button type="button" class="btn-secundario" data-acao="fechar-modal-cadastro">Cancelar</button>
+            <button type="submit" class="btn-principal">Salvar equipe</button>
           </div>
-        </div>
-
-        <div class="botoes-edicao" style="display: flex; gap: 10px; justify-content: space-between; margin-top: 20px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
-          <button type="button" class="btn-perigo" onclick="excluir_equipe()">Excluir equipe</button>
-          <div style="display: flex; gap: 8px;">
-            <button type="button" style="background-color: #64748b; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="cancelar_edicao()">Cancelar</button>
-            <button type="button" class="btn-sucesso" onclick="salvar_alteracoes_equipe()">Salvar alterações</button>
-          </div>
-        </div>
+        </form>
       </div>
-
     </div>
-  </div>
+
+    <!-- MODAL DE VISUALIZAÇÃO E EDIÇÃO DA EQUIPE -->
+    <div id="modal_equipe" class="modal-overlay oculto">
+      <div class="modal-card">
+        <span class="modal-fechar" data-acao="fechar-modal-detalhes">&times;</span>
+        
+        <!-- MODO VISUALIZAÇÃO -->
+        <div id="modo_visualizacao">
+          <h2 id="modal_nome_equipe"></h2>
+          <p><strong>Descrição:</strong> <span id="modal_descricao_equipe"></span></p>
+          <p><strong>Unidade vinculada:</strong> <span id="modal_unidade_equipe"></span></p>
+          <p><strong>Criada em:</strong> <span id="modal_data_criacao"></span></p>
+          
+          <hr style="margin: 16px 0; border: 0; border-top: 1px solid #e2e8f0;">
+          
+          <h3>Integrantes da equipe</h3>
+          <ul id="modal_lista_membros_vis" class="lista-membros" style="margin-top: 12px;"></ul>
+
+          <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+            <button type="button" class="btn-principal" data-acao="ativar-modo-edicao">Editar equipe</button>
+          </div>
+        </div>
+
+        <!-- MODO EDIÇÃO -->
+        <div id="modo_edicao" class="oculto">
+          <h2>Editar equipe</h2>
+          <form id="form_edicao_equipe" class="form-cadastro" style="margin-top: 16px;">
+            <label><strong>Nome da equipe<span class="obrigatorio">*</span></strong></label>
+            <input type="text" id="edit_nome_equipe" required>
+
+            <label><strong>Descrição / Propósito<span class="obrigatorio">*</span></strong></label>
+            <input type="text" id="edit_descricao_equipe" required>
+
+            <label><strong>Unidade vinculada</strong></label>
+            <select id="edit_unidade_equipe">
+              <option value="">-- Selecione a unidade (opcional) --</option>
+            </select>
+
+            <hr style="margin: 16px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+            <h3>Gerenciar integrantes</h3>
+            <ul id="modal_lista_membros_edit" class="lista-membros" style="margin-top: 12px;"></ul>
+
+            <!-- ADICIONAR INTEGRANTE -->
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+              <select id="select_funcionarios_disponiveis" style="margin-bottom: 0;">
+                <option value="">Carregando funcionários...</option>
+              </select>
+              <button type="button" class="btn-principal" data-acao="adicionar-membro">Adicionar</button>
+            </div>
+
+            <div style="display: flex; gap: 8px; justify-content: space-between; margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+              <button type="button" class="btn-perigo" data-acao="excluir-equipe">Excluir equipe</button>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn-secundario" data-acao="cancelar-edicao">Cancelar</button>
+                <button type="button" class="btn-sucesso" data-acao="salvar-alteracoes-equipe">Salvar alterações</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </main>
 
 </body>
 </html>

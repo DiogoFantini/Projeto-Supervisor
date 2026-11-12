@@ -130,6 +130,10 @@ function aplicar_estado_barra(recolher) {
 }
 
 function alternar_dropdown_funcionarios() {
+  if (document.body.classList.contains('barra-recolhida')) {
+    alternar_barra_lateral();
+  }
+
   const container = document.getElementById('container_dropdown_funcionarios');
   const subitens = document.getElementById('subitens_funcionarios');
 
@@ -144,4 +148,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     await obter_usuario_logado();
   }
   renderizar_barra_lateral();
+});
+
+document.addEventListener('spa_tela_carregada', (e) => {
+  const url = e.detail || '';
+  const nome_arquivo = url.split('/').pop().split('?')[0];
+  const e_pagina_funcionarios = nome_arquivo === 'funcionarios.html' || 
+                                nome_arquivo === 'folgas_abonos.html' || 
+                                nome_arquivo === 'gerenciar_usuarios.html';
+  const container = document.getElementById('container_dropdown_funcionarios');
+  const subitens = document.getElementById('subitens_funcionarios');
+  if (container && subitens && e_pagina_funcionarios) {
+    container.classList.add('aberto');
+    subitens.classList.remove('oculto');
+  }
 });

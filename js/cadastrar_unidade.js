@@ -1,4 +1,4 @@
-let lista_unidades_todas = [];
+var lista_unidades_todas = [];
 
 async function carregar_unidades() {
   const { data, error } = await _supabase
@@ -54,23 +54,45 @@ function filtrar_unidades() {
   exibir_unidades(filtradas);
 }
 
-function abrir_modal_cadastro() {
+function abrir_modal_cadastro_unidade() {
   const modal = document.getElementById('modal_cadastro_unidade');
   if (modal) modal.classList.remove('oculto');
 }
 
-function fechar_modal_cadastro() {
+function fechar_modal_cadastro_unidade() {
   const modal = document.getElementById('modal_cadastro_unidade');
   if (modal) modal.classList.add('oculto');
   const form = document.getElementById('form_cadastro_unidade');
   if (form) form.reset();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function abrir_modal_cadastro() {
+  if (document.getElementById('modal_cadastro_unidade')) {
+    abrir_modal_cadastro_unidade();
+  } else if (typeof abrir_modal_cadastro_equipe === 'function' && document.getElementById('modal_cadastro_equipe')) {
+    abrir_modal_cadastro_equipe();
+  } else if (typeof abrir_modal_cadastro_funcionario === 'function' && document.getElementById('modal_cadastro_funcionario')) {
+    abrir_modal_cadastro_funcionario();
+  }
+}
+
+function fechar_modal_cadastro() {
+  if (document.getElementById('modal_cadastro_unidade')) {
+    fechar_modal_cadastro_unidade();
+  } else if (typeof fechar_modal_cadastro_equipe === 'function' && document.getElementById('modal_cadastro_equipe')) {
+    fechar_modal_cadastro_equipe();
+  } else if (typeof fechar_modal_cadastro_funcionario === 'function' && document.getElementById('modal_cadastro_funcionario')) {
+    fechar_modal_cadastro_funcionario();
+  }
+}
+
+function iniciar_tela_unidades() {
   carregar_unidades();
 
   const formCadastro = document.getElementById('form_cadastro_unidade');
-  if (formCadastro) {
+  // Impede registro duplicado de eventos no SPA
+  if (formCadastro && !formCadastro.dataset.eventoRegistrado) {
+    formCadastro.dataset.eventoRegistrado = "true";
     formCadastro.addEventListener('submit', async (e) => {
       e.preventDefault();
       const nome = document.getElementById('novo_nome_unidade').value;
@@ -90,8 +112,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  window.addEventListener('click', (event) => {
-    const modal = document.getElementById('modal_cadastro_unidade');
-    if (event.target === modal) fechar_modal_cadastro();
-  });
+  // Tratamento de clique fora do modal adaptado para SPA
+  if (!window.listenersModalUnidadeInjetados) {
+    window.listenersModalUnidadeInjetados = true;
+    window.addEventListener('click', (event) => {
+      const modal = document.getElementById('modal_cadastro_unidade');
+      if (modal && event.target === modal) fechar_modal_cadastro();
+    });
+  }
+}
+
+// 1. Gatilho F5 / Acesso direto
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('tabela_unidades')) {
+    iniciar_tela_unidades();
+  }
+});
+
+// 2. Gatilho Navegação SPA
+document.addEventListener('spa_tela_carregada', (e) => {
+  const url_carregada = e.detail;
+  if (url_carregada.includes('unidades.html')) {
+    iniciar_tela_unidades();
+  }
 });

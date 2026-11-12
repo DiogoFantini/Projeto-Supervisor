@@ -1,12 +1,15 @@
-let dados_prontos_para_importar = [];
-let unidades_novas_para_criar = [];
+var dados_prontos_para_importar = [];
+var unidades_novas_para_criar = [];
 
 function abrir_modal_importacao() {
   const modal = document.getElementById('modal_importacao_funcionarios');
   if (modal) modal.classList.remove('oculto');
-  document.getElementById('arquivo_excel_input').value = '';
-  document.getElementById('container_resultado_importacao').classList.add('oculto');
-  document.getElementById('btn_confirmar_importacao').setAttribute('disabled', 'true');
+  const arqInput = document.getElementById('arquivo_excel_input');
+  if (arqInput) arqInput.value = '';
+  const contRes = document.getElementById('container_resultado_importacao');
+  if (contRes) contRes.classList.add('oculto');
+  const btnConf = document.getElementById('btn_confirmar_importacao');
+  if (btnConf) btnConf.setAttribute('disabled', 'true');
   dados_prontos_para_importar = [];
   unidades_novas_para_criar = [];
 }
@@ -104,19 +107,20 @@ async function validar_e_mapear_linhas(linhas_brutas) {
       return;
     }
 
-    // Identifica novas unidades sem exigir endereço
-    if (nome_unidade_key && !mapa_unidades.has(nome_unidade_key)) {
-      novas_unidades_nomes_originais.set(nome_unidade_key, nome_unidade_original);
-    }
-
-    let equipe_id_encontrado = null;
+    // Regras de validação de equipe
+    let equipe_id = null;
     if (nome_equipe_key) {
-      const equipeObj = mapa_equipes.get(nome_equipe_key);
-      if (!equipeObj) {
-        erros.push(`Linha ${num_linha}: Equipe "${nome_equipe_key}" não encontrada no sistema.`);
+      const equipe_encontrada = mapa_equipes.get(nome_equipe_key);
+      if (!equipe_encontrada) {
+        erros.push(`Linha ${num_linha}: A equipe "${linha.equipe || linha.Equipe}" não está cadastrada no sistema.`);
         return;
       }
-      equipe_id_encontrado = equipeObj.id;
+      equipe_id = equipe_encontrada.id;
+    }
+
+    // Identifica se a unidade precisa ser criada
+    if (nome_unidade_key && !mapa_unidades.has(nome_unidade_key)) {
+      novas_unidades_nomes_originais.set(nome_unidade_key, nome_unidade_original);
     }
 
     registros_validos.push({
@@ -126,53 +130,52 @@ async function validar_e_mapear_linhas(linhas_brutas) {
       regime: classificacao || null,
       registro_profissional: registro || null,
       especializacao: especializacao || null,
-      nome_unidade_temp: nome_unidade_key,
-      equipe_id: equipe_id_encontrado
+      nome_unidade_temp: nome_unidade_key || null,
+      equipe_id: equipe_id
     });
   });
 
   if (erros.length > 0) {
-    textoStatus.innerText = `Foram encontrados ${erros.length} erro(s). Corrija a planilha antes de importar.`;
-    erros.forEach(err => {
-      listaErros.innerHTML += `<li>${err}</li>`;
+    textoStatus.innerText = `Foram encontrados ${erros.length} erro(s). Corrija a planilha para continuar:`;
+    erros.forEach(erro => {
+      const li = document.createElement('li');
+      li.innerText = erro;
+      listaErros.appendChild(li);
     });
     btnConfirmar.setAttribute('disabled', 'true');
-    dados_prontos_para_importar = [];
-    unidades_novas_para_criar = [];
-  } else {
-    // Monta o payload de novas unidades explicitando endereco: null
-    unidades_novas_para_criar = Array.from(novas_unidades_nomes_originais.values()).map(nome => ({
-      nome: nome,
-      endereco: null
-    }));
-    
-    let mensagemStatus = `Tudo pronto! ${registros_validos.length} funcionário(s) pronto(s) para importação.`;
-    if (unidades_novas_para_criar.length > 0) {
-      mensagemStatus += ` (${unidades_novas_para_criar.length} nova(s) unidade(s) será(ão) criada(s) automaticamente sem endereço).`;
-    }
-
-    textoStatus.innerText = mensagemStatus;
-    btnConfirmar.removeAttribute('disabled');
-
-    dados_prontos_para_importar = {
-      registros: registros_validos,
-      mapa_unidades_existentes: mapa_unidades
-    };
+    return;
   }
+
+  // Prepara estado para confirmação
+  dados_prontos_para_importar = {
+    registros: registros_validos,
+    mapa_unidades_existentes: mapa_unidades
+  };
+
+  unidades_novas_para_criar = Array.from(novas_unidades_nomes_originais.values()).map(nome => ({ nome }));
+
+  let mensagem_sucesso = `✓ ${registros_validos.length} funcionário(s) pronto(s) para importação.`;
+  if (unidades_novas_para_criar.length > 0) {
+    mensagem_sucesso += `\n✦ ${unidades_novas_para_criar.length} nova(s) unidade(s) identificada(s) e será(ão) criada(s) automaticamente!`;
+  }
+
+  textoStatus.innerText = mensagem_sucesso;
+  textoStatus.style.color = '#15803d';
+  btnConfirmar.removeAttribute('disabled');
 }
 
 async function confirmar_importacao_banco() {
-  if (!dados_prontos_para_importar.registros || dados_prontos_para_importar.registros.length === 0) return;
+  if (!dados_prontos_para_importar || !dados_prontos_para_importar.registros) return;
 
   const btnConfirmar = document.getElementById('btn_confirmar_importacao');
   btnConfirmar.setAttribute('disabled', 'true');
-  btnConfirmar.innerText = 'Gravando...';
+  btnConfirmar.innerText = 'Importando, aguarde...';
 
   const mapa_unidades = dados_prontos_para_importar.mapa_unidades_existentes;
 
-  // 1. Cria automaticamente as unidades inexistentes com endereco null
+  // 1. Cria novas unidades detectadas no Supabase
   if (unidades_novas_para_criar.length > 0) {
-    const { data: unidades_criadas, error: errCriarUnidades } = await _supabase
+    const { data: novas_unidades_criadas, error: errCriarUnidades } = await _supabase
       .from('unidades')
       .insert(unidades_novas_para_criar)
       .select('id, nome');
@@ -184,7 +187,7 @@ async function confirmar_importacao_banco() {
       return;
     }
 
-    (unidades_criadas || []).forEach(u => {
+    novas_unidades_criadas.forEach(u => {
       mapa_unidades.set(u.nome.toLowerCase().trim(), u.id);
     });
   }
@@ -214,7 +217,9 @@ async function confirmar_importacao_banco() {
   } else {
     alert('Funcionários e unidades importados com sucesso!');
     fechar_modal_importacao();
-    carregar_funcionarios();
+    if (typeof carregar_funcionarios === 'function') {
+      carregar_funcionarios();
+    }
   }
 }
 
@@ -254,3 +259,31 @@ async function exportar_funcionarios_excel() {
 
   XLSX.writeFile(workbook, "lista_funcionarios.xlsx");
 }
+
+function iniciar_tela_importar_exportar_funcionarios() {
+  dados_prontos_para_importar = [];
+  unidades_novas_para_criar = [];
+
+  if (!window.listenersModalImportacaoInjetados) {
+    window.listenersModalImportacaoInjetados = true;
+    window.addEventListener('click', (event) => {
+      const modal = document.getElementById('modal_importacao_funcionarios');
+      if (modal && event.target === modal) fechar_modal_importacao();
+    });
+  }
+}
+
+// 1. Gatilho F5 / Acesso direto
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('modal_importacao_funcionarios')) {
+    iniciar_tela_importar_exportar_funcionarios();
+  }
+});
+
+// 2. Gatilho Navegação SPA
+document.addEventListener('spa_tela_carregada', (e) => {
+  const url_carregada = e.detail;
+  if (url_carregada.includes('funcionarios.html')) {
+    iniciar_tela_importar_exportar_funcionarios();
+  }
+});

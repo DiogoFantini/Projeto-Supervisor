@@ -98,12 +98,40 @@ async function fazer_logout() {
   window.location.href = 'login.html';
 }
 
+/**
+ * Sanitiza texto para inserção segura em HTML e atributos,
+ * protegendo contra injeção de tags e quebra de aspas.
+ */
 function sanitizar_texto(texto) {
   if (texto === null || texto === undefined) return '';
-  const div = document.createElement('div');
-  div.textContent = String(texto);
-  return div.innerHTML;
+  return String(texto)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
+
+/**
+ * Sanitiza URLs bloqueando protocolos perigosos (javascript:, data:, vbscript:).
+ */
+function sanitizar_url(url) {
+  if (!url) return '';
+  const limpa = String(url).trim();
+  if (/^(javascript|data|vbscript):/i.test(limpa)) {
+    console.warn('URL potencialmente perigosa bloqueada:', limpa);
+    return '#';
+  }
+  return limpa;
+}
+
+// Expõe no escopo global para compatibilidade com módulos e scripts auxiliares
+window._supabase = _supabase;
+window.obter_usuario_logado = obter_usuario_logado;
+window.proteger_pagina_admin = proteger_pagina_admin;
+window.fazer_logout = fazer_logout;
+window.sanitizar_texto = sanitizar_texto;
+window.sanitizar_url = sanitizar_url;
 
 document.addEventListener('DOMContentLoaded', () => {
   verificar_autenticacao();

@@ -1,7 +1,7 @@
-let lista_ausencias_todas = [];
-let lista_funcionarios_todos = [];
-let data_atual_calendario = new Date();
-let ausencia_selecionada = null;
+var lista_ausencias_todas = [];
+var lista_funcionarios_ausencia = [];
+var data_atual_calendario = new Date();
+var ausencia_selecionada = null;
 
 async function carregar_ausencias() {
   const { data, error } = await _supabase
@@ -288,10 +288,10 @@ async function carregar_select_funcionarios() {
     return;
   }
 
-  lista_funcionarios_todos = funcionarios || [];
+  lista_funcionarios_ausencia = funcionarios || [];
   select.innerHTML = '<option value="">-- Selecione o funcionário --</option>';
 
-  lista_funcionarios_todos.forEach(f => {
+  lista_funcionarios_ausencia.forEach(f => {
     const nome_seguro = sanitizar_texto(f.nome);
     const cargo_seguro = sanitizar_texto(f.cargo || 'Sem cargo');
     select.innerHTML += `<option value="${f.id}">${nome_seguro} (${cargo_seguro})</option>`;
@@ -308,12 +308,14 @@ function validar_intervalo_datas() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function iniciar_tela_folgas_abonos() {
+  ausencia_selecionada = null;
   await carregar_unidades_filtro();
   carregar_ausencias();
 
   const form = document.getElementById('form_cadastro_ausencia');
-  if (form) {
+  if (form && !form.dataset.eventoRegistrado) {
+    form.dataset.eventoRegistrado = "true";
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -340,10 +342,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  window.addEventListener('click', (event) => {
-    const modal_cadastro = document.getElementById('modal_cadastro_ausencia');
-    const modal_detalhes = document.getElementById('modal_detalhes_ausencia');
-    if (event.target === modal_cadastro) fechar_modal_registrar_ausencia();
-    if (event.target === modal_detalhes) fechar_modal_detalhes_ausencia();
-  });
+  if (!window.listenersModalFolgasAbonosInjetados) {
+    window.listenersModalFolgasAbonosInjetados = true;
+    window.addEventListener('click', (event) => {
+      const modal_cadastro = document.getElementById('modal_cadastro_ausencia');
+      const modal_detalhes = document.getElementById('modal_detalhes_ausencia');
+      if (modal_cadastro && event.target === modal_cadastro) fechar_modal_registrar_ausencia();
+      if (modal_detalhes && event.target === modal_detalhes) fechar_modal_detalhes_ausencia();
+    });
+  }
+}
+
+// 1. Gatilho F5 / Acesso direto
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('grade_dias_mes')) {
+    iniciar_tela_folgas_abonos();
+  }
+});
+
+// 2. Gatilho Navegação SPA
+document.addEventListener('spa_tela_carregada', (e) => {
+  const url_carregada = e.detail;
+  if (url_carregada.includes('folgas_abonos.html')) {
+    iniciar_tela_folgas_abonos();
+  }
 });

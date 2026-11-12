@@ -1,6 +1,6 @@
-let lista_funcionarios_todos = [];
-let lista_unidades_todas = [];
-let funcionario_atual = null;
+var lista_funcionarios_todos = [];
+var lista_unidades_func = [];
+var funcionario_atual = null;
 
 async function carregar_funcionarios() {
   const { data, error } = await _supabase
@@ -82,28 +82,35 @@ function filtrar_funcionarios() {
   exibir_funcionarios(filtrados);
 }
 
-function abrir_modal_detalhes(funcionario) {
+function abrir_modal_detalhes_funcionario(funcionario) {
   funcionario_atual = funcionario;
 
   const nome_unidade = funcionario.unidades?.nome || funcionario.equipes?.unidades?.nome || '-';
 
-  document.getElementById('detalhe_nome').innerText = funcionario.nome || '-';
-  document.getElementById('detalhe_numero_funcional').innerText = funcionario.numero_funcional || '-';
-  document.getElementById('detalhe_cargo').innerText = funcionario.cargo || '-';
-  document.getElementById('detalhe_classificacao').innerText = funcionario.regime || '-';
-  document.getElementById('detalhe_registro').innerText = funcionario.registro_profissional || '-';
-  document.getElementById('detalhe_especializacao').innerText = funcionario.especializacao || '-';
-  document.getElementById('detalhe_equipe').innerText = funcionario.equipes?.nome || 'Sem equipe';
-  document.getElementById('detalhe_unidade').innerText = nome_unidade;
+  const setTexto = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = val || '-';
+  };
 
-  document.getElementById('modo_visualizacao_funcionario').classList.remove('oculto');
-  document.getElementById('modo_edicao_funcionario').classList.add('oculto');
+  setTexto('detalhe_nome', funcionario.nome);
+  setTexto('detalhe_numero_funcional', funcionario.numero_funcional);
+  setTexto('detalhe_cargo', funcionario.cargo);
+  setTexto('detalhe_classificacao', funcionario.regime);
+  setTexto('detalhe_registro', funcionario.registro_profissional);
+  setTexto('detalhe_especializacao', funcionario.especializacao);
+  setTexto('detalhe_equipe', funcionario.equipes?.nome || 'Sem equipe');
+  setTexto('detalhe_unidade', nome_unidade);
+
+  const modoVis = document.getElementById('modo_visualizacao_funcionario');
+  if (modoVis) modoVis.classList.remove('oculto');
+  const modoEdit = document.getElementById('modo_edicao_funcionario');
+  if (modoEdit) modoEdit.classList.add('oculto');
 
   const modal = document.getElementById('modal_detalhes_funcionario');
   if (modal) modal.classList.remove('oculto');
 }
 
-function fechar_modal_detalhes() {
+function fechar_modal_detalhes_funcionario() {
   const modal = document.getElementById('modal_detalhes_funcionario');
   if (modal) modal.classList.add('oculto');
   funcionario_atual = null;
@@ -112,106 +119,85 @@ function fechar_modal_detalhes() {
 async function ativar_modo_edicao_funcionario() {
   if (!funcionario_atual) return;
 
-  document.getElementById('edit_nome_funcionario').value = funcionario_atual.nome || '';
-  document.getElementById('edit_numero_funcional_funcionario').value = funcionario_atual.numero_funcional || '';
-  document.getElementById('edit_cargo_funcionario').value = funcionario_atual.cargo || '';
-  document.getElementById('edit_classificacao_funcionario').value = funcionario_atual.regime || '';
-  document.getElementById('edit_registro_funcionario').value = funcionario_atual.registro_profissional || '';
-  document.getElementById('edit_especializacao_funcionario').value = funcionario_atual.especializacao || '';
+  const setValue = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val || '';
+  };
+
+  setValue('edit_nome_funcionario', funcionario_atual.nome);
+  setValue('edit_numero_funcional_funcionario', funcionario_atual.numero_funcional);
+  setValue('edit_cargo_funcionario', funcionario_atual.cargo);
+  setValue('edit_classificacao_funcionario', funcionario_atual.regime);
+  setValue('edit_registro_funcionario', funcionario_atual.registro_profissional);
+  setValue('edit_especializacao_funcionario', funcionario_atual.especializacao);
 
   atualizar_campo_registro_edicao();
 
-  document.getElementById('modo_visualizacao_funcionario').classList.add('oculto');
-  document.getElementById('modo_edicao_funcionario').classList.remove('oculto');
+  const id_unidade_atual = funcionario_atual.unidade_id || funcionario_atual.equipes?.unidade_id || '';
+  await carregar_unidades_select_funcionario('edit_unidade_funcionario', id_unidade_atual);
 
-  await carregar_unidades_select_edicao();
+  if (id_unidade_atual) {
+    await carregar_equipes_da_unidade_edicao(funcionario_atual.equipe_id || '');
+  } else {
+    const containerEq = document.getElementById('container_equipe_funcionario_edit');
+    if (containerEq) containerEq.classList.add('oculto');
+  }
+
+  const modoVis = document.getElementById('modo_visualizacao_funcionario');
+  if (modoVis) modoVis.classList.add('oculto');
+  const modoEdit = document.getElementById('modo_edicao_funcionario');
+  if (modoEdit) modoEdit.classList.remove('oculto');
 }
 
 function cancelar_edicao_funcionario() {
-  document.getElementById('modo_edicao_funcionario').classList.add('oculto');
-  document.getElementById('modo_visualizacao_funcionario').classList.remove('oculto');
+  const modoEdit = document.getElementById('modo_edicao_funcionario');
+  if (modoEdit) modoEdit.classList.add('oculto');
+  const modoVis = document.getElementById('modo_visualizacao_funcionario');
+  if (modoVis) modoVis.classList.remove('oculto');
 }
 
 function atualizar_campo_registro() {
-  const cargoSelect = document.getElementById('novo_cargo_funcionario');
+  const cargo = document.getElementById('novo_cargo_funcionario').value;
   const container = document.getElementById('container_registro_profissional');
   const label = document.getElementById('label_registro_profissional');
-  const input = document.getElementById('novo_registro_funcionario');
 
-  if (!cargoSelect || !container || !label || !input) return;
-
-  const cargo = cargoSelect.value;
-  const mapeamentoRegistros = {
-    'Médico(a)': { label: 'CRM (opcional):', placeholder: 'Ex: CRM/SP 123456' },
-    'Enfermeiro(a)': { label: 'COREN (opcional):', placeholder: 'Ex: COREN-SP 123456' },
-    'Técnico(a) de Enfermagem': { label: 'COREN (opcional):', placeholder: 'Ex: COREN-SP 123456' },
-    'Auxiliar de Enfermagem': { label: 'COREN (opcional):', placeholder: 'Ex: COREN-SP 123456' },
-    'Dentista': { label: 'CRO (opcional):', placeholder: 'Ex: CRO-SP 123456' }
-  };
-
-  if (mapeamentoRegistros[cargo]) {
-    label.innerHTML = `<strong>${mapeamentoRegistros[cargo].label}</strong>`;
-    input.placeholder = mapeamentoRegistros[cargo].placeholder;
-    input.required = false;
+  if (cargo === 'Médico(a)') {
     container.classList.remove('oculto');
+    label.innerText = 'CRM (opcional)';
+  } else if (cargo === 'Enfermeiro(a)' || cargo === 'Técnico(a) de Enfermagem' || cargo === 'Auxiliar de Enfermagem') {
+    container.classList.remove('oculto');
+    label.innerText = 'COREN (opcional)';
+  } else if (cargo === 'Dentista') {
+    container.classList.remove('oculto');
+    label.innerText = 'CRO (opcional)';
   } else {
-    input.value = '';
-    input.required = false;
     container.classList.add('oculto');
+    document.getElementById('novo_registro_funcionario').value = '';
   }
 }
 
 function atualizar_campo_registro_edicao() {
-  const cargoSelect = document.getElementById('edit_cargo_funcionario');
+  const cargo = document.getElementById('edit_cargo_funcionario').value;
   const container = document.getElementById('container_registro_profissional_edit');
   const label = document.getElementById('label_registro_profissional_edit');
-  const input = document.getElementById('edit_registro_funcionario');
 
-  if (!cargoSelect || !container || !label || !input) return;
-
-  const cargo = cargoSelect.value;
-  const mapeamentoRegistros = {
-    'Médico(a)': { label: 'CRM (opcional):', placeholder: 'Ex: CRM/SP 123456' },
-    'Enfermeiro(a)': { label: 'COREN (opcional):', placeholder: 'Ex: COREN-SP 123456' },
-    'Técnico(a) de Enfermagem': { label: 'COREN (opcional):', placeholder: 'Ex: COREN-SP 123456' },
-    'Auxiliar de Enfermagem': { label: 'COREN (opcional):', placeholder: 'Ex: COREN-SP 123456' },
-    'Dentista': { label: 'CRO (opcional):', placeholder: 'Ex: CRO-SP 123456' }
-  };
-
-  if (mapeamentoRegistros[cargo]) {
-    label.innerHTML = `<strong>${mapeamentoRegistros[cargo].label}</strong>`;
-    input.placeholder = mapeamentoRegistros[cargo].placeholder;
-    input.required = false;
+  if (cargo === 'Médico(a)') {
     container.classList.remove('oculto');
+    label.innerText = 'CRM (opcional)';
+  } else if (cargo === 'Enfermeiro(a)' || cargo === 'Técnico(a) de Enfermagem' || cargo === 'Auxiliar de Enfermagem') {
+    container.classList.remove('oculto');
+    label.innerText = 'COREN (opcional)';
+  } else if (cargo === 'Dentista') {
+    container.classList.remove('oculto');
+    label.innerText = 'CRO (opcional)';
   } else {
-    input.value = '';
-    input.required = false;
     container.classList.add('oculto');
+    document.getElementById('edit_registro_funcionario').value = '';
   }
 }
 
-async function abrir_modal_cadastro() {
-  const modal = document.getElementById('modal_cadastro_funcionario');
-  if (modal) modal.classList.remove('oculto');
-  await carregar_unidades_select();
-}
-
-function fechar_modal_cadastro() {
-  const modal = document.getElementById('modal_cadastro_funcionario');
-  if (modal) modal.classList.add('oculto');
-  const form = document.getElementById('form_cadastro_funcionario');
-  if (form) form.reset();
-  
-  const containerEquipe = document.getElementById('container_equipe_funcionario');
-  const selectEquipe = document.getElementById('novo_equipe_funcionario');
-  if (containerEquipe) containerEquipe.classList.add('oculto');
-  if (selectEquipe) selectEquipe.required = false;
-
-  atualizar_campo_registro();
-}
-
-async function carregar_unidades_select() {
-  const selectUnidade = document.getElementById('novo_unidade_funcionario');
+async function carregar_unidades_select_funcionario(selectElementId, valorSelecionado = '') {
+  const selectUnidade = document.getElementById(selectElementId);
   if (!selectUnidade) return;
 
   selectUnidade.innerHTML = '<option value="">Carregando unidades...</option>';
@@ -221,33 +207,38 @@ async function carregar_unidades_select() {
     .select('id, nome')
     .order('nome', { ascending: true });
 
-  if (error) return console.error('Erro ao carregar unidades:', error);
+  if (error) {
+    console.error('Erro ao carregar unidades:', error);
+    selectUnidade.innerHTML = '<option value="">Erro ao carregar unidades</option>';
+    return;
+  }
 
-  lista_unidades_todas = unidades || [];
+  lista_unidades_func = unidades || [];
   selectUnidade.innerHTML = '<option value="">-- Selecione a unidade (opcional) --</option>';
 
-  lista_unidades_todas.forEach(u => {
+  lista_unidades_func.forEach(u => {
     const nome_seguro = sanitizar_texto(u.nome);
     selectUnidade.innerHTML += `<option value="${u.id}">${nome_seguro}</option>`;
   });
+
+  if (valorSelecionado) {
+    selectUnidade.value = valorSelecionado;
+  }
 }
 
 async function carregar_equipes_da_unidade() {
   const unidadeId = document.getElementById('novo_unidade_funcionario').value;
-  const containerEquipe = document.getElementById('container_equipe_funcionario');
+  const container = document.getElementById('container_equipe_funcionario');
   const selectEquipe = document.getElementById('novo_equipe_funcionario');
 
   if (!unidadeId) {
-    containerEquipe.classList.add('oculto');
+    container.classList.add('oculto');
     selectEquipe.innerHTML = '<option value="">-- Selecione a equipe (opcional) --</option>';
-    selectEquipe.value = '';
-    selectEquipe.required = false;
     return;
   }
 
   selectEquipe.innerHTML = '<option value="">Carregando equipes...</option>';
-  containerEquipe.classList.remove('oculto');
-  selectEquipe.required = false;
+  container.classList.remove('oculto');
 
   const { data: equipes, error } = await _supabase
     .from('equipes')
@@ -255,10 +246,13 @@ async function carregar_equipes_da_unidade() {
     .eq('unidade_id', unidadeId)
     .order('nome', { ascending: true });
 
-  if (error) return console.error('Erro ao carregar equipes:', error);
+  if (error) {
+    console.error('Erro ao carregar equipes da unidade:', error);
+    selectEquipe.innerHTML = '<option value="">Erro ao carregar equipes</option>';
+    return;
+  }
 
   selectEquipe.innerHTML = '<option value="">-- Selecione a equipe (opcional) --</option>';
-
   if (!equipes || equipes.length === 0) {
     selectEquipe.innerHTML = '<option value="">Nenhuma equipe cadastrada nesta unidade</option>';
   } else {
@@ -269,48 +263,19 @@ async function carregar_equipes_da_unidade() {
   }
 }
 
-async function carregar_unidades_select_edicao() {
-  const selectUnidade = document.getElementById('edit_unidade_funcionario');
-  if (!selectUnidade) return;
-
-  selectUnidade.innerHTML = '<option value="">Carregando unidades...</option>';
-
-  const { data: unidades, error } = await _supabase
-    .from('unidades')
-    .select('id, nome')
-    .order('nome', { ascending: true });
-
-  if (error) return console.error('Erro ao carregar unidades:', error);
-
-  selectUnidade.innerHTML = '<option value="">-- Selecione a unidade (opcional) --</option>';
-
-  (unidades || []).forEach(u => {
-    const nome_seguro = sanitizar_texto(u.nome);
-    selectUnidade.innerHTML += `<option value="${u.id}">${nome_seguro}</option>`;
-  });
-
-  const unidadeAtualId = funcionario_atual.unidade_id || funcionario_atual.equipes?.unidade_id || funcionario_atual.equipes?.unidades?.id;
-  selectUnidade.value = unidadeAtualId || '';
-
-  await carregar_equipes_da_unidade_edicao();
-}
-
-async function carregar_equipes_da_unidade_edicao() {
+async function carregar_equipes_da_unidade_edicao(valorSelecionado = '') {
   const unidadeId = document.getElementById('edit_unidade_funcionario').value;
-  const containerEquipe = document.getElementById('container_equipe_funcionario_edit');
+  const container = document.getElementById('container_equipe_funcionario_edit');
   const selectEquipe = document.getElementById('edit_equipe_funcionario');
 
   if (!unidadeId) {
-    containerEquipe.classList.add('oculto');
+    container.classList.add('oculto');
     selectEquipe.innerHTML = '<option value="">-- Selecione a equipe (opcional) --</option>';
-    selectEquipe.value = '';
-    selectEquipe.required = false;
     return;
   }
 
   selectEquipe.innerHTML = '<option value="">Carregando equipes...</option>';
-  containerEquipe.classList.remove('oculto');
-  selectEquipe.required = false;
+  container.classList.remove('oculto');
 
   const { data: equipes, error } = await _supabase
     .from('equipes')
@@ -318,10 +283,13 @@ async function carregar_equipes_da_unidade_edicao() {
     .eq('unidade_id', unidadeId)
     .order('nome', { ascending: true });
 
-  if (error) return console.error('Erro ao carregar equipes:', error);
+  if (error) {
+    console.error('Erro ao carregar equipes da unidade:', error);
+    selectEquipe.innerHTML = '<option value="">Erro ao carregar equipes</option>';
+    return;
+  }
 
   selectEquipe.innerHTML = '<option value="">-- Selecione a equipe (opcional) --</option>';
-
   if (!equipes || equipes.length === 0) {
     selectEquipe.innerHTML = '<option value="">Nenhuma equipe cadastrada nesta unidade</option>';
   } else {
@@ -329,11 +297,28 @@ async function carregar_equipes_da_unidade_edicao() {
       const nome_seguro = sanitizar_texto(eq.nome);
       selectEquipe.innerHTML += `<option value="${eq.id}">${nome_seguro}</option>`;
     });
-
-    if (funcionario_atual.equipe_id) {
-      selectEquipe.value = funcionario_atual.equipe_id;
-    }
   }
+
+  if (valorSelecionado) {
+    selectEquipe.value = valorSelecionado;
+  }
+}
+
+async function abrir_modal_cadastro_funcionario() {
+  const modal = document.getElementById('modal_cadastro_funcionario');
+  if (modal) modal.classList.remove('oculto');
+  await carregar_unidades_select_funcionario('novo_unidade_funcionario');
+}
+
+function fechar_modal_cadastro_funcionario() {
+  const modal = document.getElementById('modal_cadastro_funcionario');
+  if (modal) modal.classList.add('oculto');
+  const form = document.getElementById('form_cadastro_funcionario');
+  if (form) form.reset();
+  const regContainer = document.getElementById('container_registro_profissional');
+  if (regContainer) regContainer.classList.add('oculto');
+  const eqContainer = document.getElementById('container_equipe_funcionario');
+  if (eqContainer) eqContainer.classList.add('oculto');
 }
 
 async function excluir_funcionario() {
@@ -353,11 +338,13 @@ async function excluir_funcionario() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function iniciar_tela_funcionarios() {
+  funcionario_atual = null;
   carregar_funcionarios();
 
   const formCadastro = document.getElementById('form_cadastro_funcionario');
-  if (formCadastro) {
+  if (formCadastro && !formCadastro.dataset.eventoRegistrado) {
+    formCadastro.dataset.eventoRegistrado = "true";
     formCadastro.addEventListener('submit', async (e) => {
       e.preventDefault();
       const nome = document.getElementById('novo_nome_funcionario').value;
@@ -390,7 +377,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const formEdicao = document.getElementById('form_edicao_funcionario');
-  if (formEdicao) {
+  if (formEdicao && !formEdicao.dataset.eventoRegistrado) {
+    formEdicao.dataset.eventoRegistrado = "true";
     formEdicao.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!funcionario_atual) return;
@@ -427,10 +415,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  window.addEventListener('click', (event) => {
-    const modal_cadastro = document.getElementById('modal_cadastro_funcionario');
-    const modal_detalhes = document.getElementById('modal_detalhes_funcionario');
-    if (event.target === modal_cadastro) fechar_modal_cadastro();
-    if (event.target === modal_detalhes) fechar_modal_detalhes();
-  });
+  if (!window.listenersModalFuncionariosInjetados) {
+    window.listenersModalFuncionariosInjetados = true;
+    window.addEventListener('click', (event) => {
+      const modal_cadastro = document.getElementById('modal_cadastro_funcionario');
+      const modal_detalhes = document.getElementById('modal_detalhes_funcionario');
+      if (modal_cadastro && event.target === modal_cadastro) fechar_modal_cadastro();
+      if (modal_detalhes && event.target === modal_detalhes) fechar_modal_detalhes();
+    });
+  }
+}
+
+// 1. Gatilho F5 / Acesso direto
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('tabela_funcionarios')) {
+    iniciar_tela_funcionarios();
+  }
+});
+
+// 2. Gatilho Navegação SPA
+document.addEventListener('spa_tela_carregada', (e) => {
+  const url_carregada = e.detail;
+  if (url_carregada.includes('funcionarios.html')) {
+    iniciar_tela_funcionarios();
+  }
 });

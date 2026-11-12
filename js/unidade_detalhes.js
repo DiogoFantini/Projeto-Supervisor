@@ -1,8 +1,8 @@
-let unidade_id = null;
-let lista_equipes_unidade = [];
-let lista_funcs_sem_equipe = [];
-let modo_desvincular_ativo = false;
-let equipe_selecionada_para_desvincular = null;
+var unidade_id = null;
+var lista_equipes_unidade = [];
+var lista_funcs_sem_equipe = [];
+var modo_desvincular_ativo = false;
+var equipe_selecionada_para_desvincular = null;
 
 function obter_id_url_e_carregar() {
   const parametros = new URLSearchParams(window.location.search);
@@ -26,11 +26,13 @@ async function carregar_dados_unidade() {
 
   if (errUnidade || !unidade) {
     console.error('Erro ao carregar unidade:', errUnidade);
-    document.getElementById('titulo_unidade').innerText = 'Unidade não encontrada';
+    const titulo = document.getElementById('titulo_unidade');
+    if (titulo) titulo.innerText = 'Unidade não encontrada';
     return;
   }
 
-  document.getElementById('titulo_unidade').innerText = unidade.nome;
+  const tituloEl = document.getElementById('titulo_unidade');
+  if (tituloEl) tituloEl.innerText = unidade.nome;
 
   // Carrega equipes vinculadas
   const { data: equipes, error: errEquipes } = await _supabase
@@ -45,7 +47,7 @@ async function carregar_dados_unidade() {
   }
 
   lista_equipes_unidade = equipes || [];
-  exibir_equipes(lista_equipes_unidade);
+  exibir_equipes_unidade(lista_equipes_unidade);
 
   // Carrega funcionários vinculados à unidade que NÃO possuem equipe
   const { data: funcionarios, error: errFuncs } = await _supabase
@@ -70,20 +72,22 @@ function atualizar_estado_dropdown_funcionarios(lista) {
   const tituloDropdown = document.getElementById('titulo_dropdown_funcs');
   const conteudoDropdown = document.getElementById('conteudo_dropdown_funcs');
 
-  tituloDropdown.innerText = `Funcionários sem equipe (${lista.length})`;
+  if (tituloDropdown) tituloDropdown.innerText = `Funcionários sem equipe (${lista.length})`;
 
   if (lista.length > 0) {
-    btnDropdown.removeAttribute('disabled');
+    if (btnDropdown) btnDropdown.removeAttribute('disabled');
     renderizar_lista_funcs_dropdown(lista);
   } else {
-    btnDropdown.setAttribute('disabled', 'true');
-    conteudoDropdown.classList.add('oculto');
+    if (btnDropdown) btnDropdown.setAttribute('disabled', 'true');
+    if (conteudoDropdown) conteudoDropdown.classList.add('oculto');
   }
 }
 
-function alternar_dropdown_funcionarios() {
+function alternar_dropdown_funcs_sem_equipe() {
   const conteudoDropdown = document.getElementById('conteudo_dropdown_funcs');
-  conteudoDropdown.classList.toggle('oculto');
+  if (conteudoDropdown) {
+    conteudoDropdown.classList.toggle('oculto');
+  }
 }
 
 function renderizar_lista_funcs_dropdown(lista) {
@@ -131,19 +135,23 @@ function alternar_modo_desvincular() {
   const thAcoes = document.getElementById('coluna_acoes_cabecalho');
 
   if (modo_desvincular_ativo) {
-    btn.innerText = 'Concluir';
-    btn.style.backgroundColor = '#64748b';
+    if (btn) {
+      btn.innerText = 'Concluir';
+      btn.style.backgroundColor = '#64748b';
+    }
     if (thAcoes) thAcoes.classList.remove('oculto');
   } else {
-    btn.innerText = 'Desvincular equipe';
-    btn.style.backgroundColor = '#ef4444';
+    if (btn) {
+      btn.innerText = 'Desvincular equipe';
+      btn.style.backgroundColor = '#ef4444';
+    }
     if (thAcoes) thAcoes.classList.add('oculto');
   }
 
-  exibir_equipes(lista_equipes_unidade);
+  exibir_equipes_unidade(lista_equipes_unidade);
 }
 
-function exibir_equipes(lista) {
+function exibir_equipes_unidade(lista) {
   const tbody = document.getElementById('tabela_equipes_unidade');
   if (!tbody) return;
   tbody.innerHTML = '';
@@ -176,7 +184,7 @@ function exibir_equipes(lista) {
   });
 }
 
-function filtrar_equipes() {
+function filtrar_equipes_unidade() {
   const campoBusca = document.getElementById('campo_busca_equipe');
   if (!campoBusca) return;
   const termo = campoBusca.value.toLowerCase().trim();
@@ -188,12 +196,21 @@ function filtrar_equipes() {
     return bate_nome || bate_descricao;
   });
 
-  exibir_equipes(filtradas);
+  exibir_equipes_unidade(filtradas);
+}
+
+function filtrar_equipes() {
+  if (document.getElementById('tabela_equipes_unidade')) {
+    filtrar_equipes_unidade();
+  } else if (typeof filtrar_equipes_geral === 'function' && document.getElementById('tabela_equipes')) {
+    filtrar_equipes_geral();
+  }
 }
 
 function confirmar_desvinculo_equipe(equipe) {
   equipe_selecionada_para_desvincular = equipe;
-  document.getElementById('nome_equipe_desvincular').innerText = equipe.nome;
+  const nomeEl = document.getElementById('nome_equipe_desvincular');
+  if (nomeEl) nomeEl.innerText = equipe.nome;
   const modal = document.getElementById('modal_confirmar_desvinculo_equipe');
   if (modal) modal.classList.remove('oculto');
 }
@@ -264,11 +281,14 @@ async function carregar_equipes_disponiveis() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function iniciar_tela_unidade_detalhes() {
+  modo_desvincular_ativo = false;
+  equipe_selecionada_para_desvincular = null;
   obter_id_url_e_carregar();
 
   const formVincular = document.getElementById('form_vincular_equipe_unidade');
-  if (formVincular) {
+  if (formVincular && !formVincular.dataset.eventoRegistrado) {
+    formVincular.dataset.eventoRegistrado = "true";
     formVincular.addEventListener('submit', async (e) => {
       e.preventDefault();
       const equipe_selecionada_id = document.getElementById('select_equipe_disponivel').value;
@@ -292,10 +312,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  window.addEventListener('click', (event) => {
-    const modal_vincular = document.getElementById('modal_vincular_equipe_unidade');
-    const modal_confirmar = document.getElementById('modal_confirmar_desvinculo_equipe');
-    if (event.target === modal_vincular) fechar_modal_vincular_equipe();
-    if (event.target === modal_confirmar) fechar_modal_confirmar_desvinculo();
-  });
+  if (!window.listenersModalUnidadeDetalhesInjetados) {
+    window.listenersModalUnidadeDetalhesInjetados = true;
+    window.addEventListener('click', (event) => {
+      const modal_vincular = document.getElementById('modal_vincular_equipe_unidade');
+      const modal_confirmar = document.getElementById('modal_confirmar_desvinculo_equipe');
+      if (modal_vincular && event.target === modal_vincular) fechar_modal_vincular_equipe();
+      if (modal_confirmar && event.target === modal_confirmar) fechar_modal_confirmar_desvinculo();
+    });
+  }
+}
+
+// 1. Gatilho F5 / Acesso direto
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('tabela_equipes_unidade')) {
+    iniciar_tela_unidade_detalhes();
+  }
+});
+
+// 2. Gatilho Navegação SPA
+document.addEventListener('spa_tela_carregada', (e) => {
+  const url_carregada = e.detail;
+  if (url_carregada.includes('unidade_detalhes.html')) {
+    iniciar_tela_unidade_detalhes();
+  }
 });

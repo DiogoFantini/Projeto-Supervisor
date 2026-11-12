@@ -1,11 +1,4 @@
-let lista_usuarios_cache = [];
-
-document.addEventListener('DOMContentLoaded', async () => {
-  if (typeof proteger_pagina_admin === 'function') {
-    await proteger_pagina_admin();
-  }
-  carregar_usuarios();
-});
+var lista_usuarios_cache = [];
 
 async function carregar_usuarios() {
   const { data: usuarios, error } = await _supabase
@@ -24,6 +17,7 @@ async function carregar_usuarios() {
 
 function renderizar_tabela_usuarios(lista) {
   const tbody = document.getElementById('tabela_usuarios');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
   if (lista.length === 0) {
@@ -51,7 +45,9 @@ function renderizar_tabela_usuarios(lista) {
 }
 
 function filtrar_usuarios() {
-  const termo = document.getElementById('campo_busca_usuario').value.toLowerCase();
+  const campo = document.getElementById('campo_busca_usuario');
+  if (!campo) return;
+  const termo = campo.value.toLowerCase();
   const filtrados = lista_usuarios_cache.filter(u => 
     u.email.toLowerCase().includes(termo) || 
     u.role.toLowerCase().includes(termo)
@@ -60,12 +56,15 @@ function filtrar_usuarios() {
 }
 
 function abrir_modal_cadastro_usuario() {
-  document.getElementById('modal_cadastro_usuario').classList.remove('oculto');
+  const modal = document.getElementById('modal_cadastro_usuario');
+  if (modal) modal.classList.remove('oculto');
 }
 
 function fechar_modal_cadastro_usuario() {
-  document.getElementById('modal_cadastro_usuario').classList.add('oculto');
-  document.getElementById('form_cadastro_usuario').reset();
+  const modal = document.getElementById('modal_cadastro_usuario');
+  if (modal) modal.classList.add('oculto');
+  const form = document.getElementById('form_cadastro_usuario');
+  if (form) form.reset();
 }
 
 async function salvar_novo_usuario(e) {
@@ -122,3 +121,38 @@ async function excluir_usuario(id, email) {
     carregar_usuarios();
   }
 }
+
+async function iniciar_tela_gerenciar_usuarios() {
+  if (typeof proteger_pagina_admin === 'function') {
+    await proteger_pagina_admin();
+  }
+  carregar_usuarios();
+
+  const form = document.getElementById('form_cadastro_usuario');
+  if (form && !form.dataset.eventoRegistrado) {
+    form.dataset.eventoRegistrado = "true";
+  }
+
+  if (!window.listenersModalGerenciarUsuariosInjetados) {
+    window.listenersModalGerenciarUsuariosInjetados = true;
+    window.addEventListener('click', (event) => {
+      const modal = document.getElementById('modal_cadastro_usuario');
+      if (modal && event.target === modal) fechar_modal_cadastro_usuario();
+    });
+  }
+}
+
+// 1. Gatilho F5 / Acesso direto
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('tabela_usuarios')) {
+    iniciar_tela_gerenciar_usuarios();
+  }
+});
+
+// 2. Gatilho Navegação SPA
+document.addEventListener('spa_tela_carregada', (e) => {
+  const url_carregada = e.detail;
+  if (url_carregada.includes('gerenciar_usuarios.html')) {
+    iniciar_tela_gerenciar_usuarios();
+  }
+});

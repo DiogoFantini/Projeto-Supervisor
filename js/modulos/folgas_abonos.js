@@ -1,0 +1,453 @@
+let abortController = null;
+let lista_ausencias_todas = [];
+let lista_funcionarios_todos = [];
+let data_atual_calendario = new Date();
+let ausencia_selecionada = null;
+let salvando = false;
+
+export async function mount(container) {
+  abortController = new AbortController();
+  const { signal } = abortController;
+
+  ausencia_selecionada = null;
+  salvando = false;
+  data_atual_calendario = new Date();
+
+  await carregar_unidades_filtro();
+  await carregar_ausencias();
+
+  // Delegação de eventos de clique
+  container.addEventListener('click', async (e) => {
+    const acaoEl = e.target.closest('[data-acao]');
+    if (!acaoEl) return;
+
+    const acao = acaoEl.getAttribute('data-acao');
+
+    if (acao === 'mudar-mes') {
+      const delta = parseInt(acaoEl.getAttribute('data-delta'), 10) || 0;
+      mudar_mes(delta);
+    } else if (acao === 'ir-para-hoje') {
+      ir_para_hoje();
+    } else if (acao === 'abrir-modal-registrar') {
+      await abrir_modal_registrar_ausencia();
+    } else if (acao === 'fechar-modal-registrar') {
+      fechar_modal_registrar_ausencia();
+    } else if (acao === 'abrir-detalhes-ausencia') {
+      const ausJson = acaoEl.getAttribute('data-ausencia');
+      if (ausJson) {
+        abrir_modal_detalhes_ausencia(JSON.parse(ausJson));
+      }
+    } else if (acao === 'fechar-modal-detalhes') {
+      fechar_modal_detalhes_ausencia();
+    } else if (acao === 'excluir-ausencia') {
+      await excluir_ausencia_atual();
+    }
+  }, { signal });
+
+  // Filtros de busca e selects
+  container.addEventListener('input', (e) => {
+    if (e.target.id === 'campo_busca_ausencia') {
+      filtrar_ausencias();
+    }
+  }, { signal });
+
+  container.addEventListener('change', async (e) => {
+    if (e.target.id === 'filtro_tipo_ausencia' || e.target.id === 'filtro_equipe_ausencia') {
+      filtrar_ausencias();
+    } else if (e.target.id === 'filtro_unidade_ausencia') {
+      await ao_mudar_unidade_filtro();
+    } else if (e.target.id === 'data_inicio_ausencia' || e.target.id === 'data_fim_ausencia') {
+      validar_intervalo_datas();
+    }
+  }, { signal });
+
+  // Formulário
+  container.addEventListener('submit', async (e) => {
+    if (e.target.id === 'form_cadastro_ausencia') {
+      e.preventDefault();
+      await salvar_registro_ausencia();
+    }
+  }, { signal });
+
+  // Listeners globais no window com signal
+  window.addEventListener('click', (e) => {
+    const modal_cadastro = document.getElementById('modal_cadastro_ausencia');
+    const modal_detalhes = document.getElementById('modal_detalhes_ausencia');
+    if (modal_cadastro && e.target === modal_cadastro) fechar_modal_registrar_ausencia();
+    if (modal_detalhes && e.target === modal_detalhes) fechar_modal_detalhes_ausencia();
+  }, { signal });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      fechar_modal_registrar_ausencia();
+      fechar_modal_detalhes_ausencia();
+    }
+  }, { signal });
+}
+
+export function unmount() {
+  if (abortController) {
+    abortController.abort();
+    abortController = null;
+  }
+  salvando = false;
+  lista_ausencias_todas = [];
+  lista_funcionarios_todos = [];
+  ausencia_selecionada = null;
+}
+
+async function carregar_ausencias() {
+  const { data, error } = await window._supabase
+    .from('ausencias')
+    .select('*, funcionarios(id, nome, cargo, equipe_id, equipes(id, nome, unidade_id, unidades(id, nome)))')
+    .order('data_inicio', { ascending: true });
+
+  if (error) {
+    console.error('Erro ao carregar ausências:', error);
+    return;
+  }
+
+  lista_ausencias_todas = data || [];
+  renderizar_calendario();
+}
+
+async function carregar_unidades_filtro() {
+  const selectUnidade = document.getElementById('filtro_unidade_ausencia');
+  if (!selectUnidade) return;
+
+  const { data: unidades, error } = await window._supabase
+    .from('unidades')
+    .select('id, nome')
+    .order('nome', { ascending: true });
+
+  if (error) {
+    console.error('Erro ao carregar unidades para filtro:', error);
+    return;
+  }
+
+  selectUnidade.innerHTML = '<option value="">Todas as unidades</option>' +
+    (unidades || []).map(u => 
+      `<option value="${encodeURIComponent(u.id)}">${window.sanitizar_texto(u.nome)}</option>`
+    ).join('');
+}
+
+async function ao_mudar_unidade_filtro() {
+  await carregar_equipes_filtro();
+  filtrar_ausencias();
+}
+
+async function carregar_equipes_filtro() {
+  const selectUnidade = document.getElementById('filtro_unidade_ausencia');
+  const selectEquipe = document.getElementById('filtro_equipe_ausencia');
+  if (!selectUnidade || !selectEquipe) return;
+
+  const unidadeId = selectUnidade.value;
+
+  if (!unidadeId) {
+    selectEquipe.value = '';
+    selectEquipe.classList.add('oculto');
+    selectEquipe.innerHTML = '<option value="">Todas as equipes</option>';
+    return;
+  }
+
+  selectEquipe.innerHTML = '<option value="">Carregando equipes...</option>';
+  selectEquipe.classList.remove('oculto');
+
+  const { data: equipes, error } = await window._supabase
+    .from('equipes')
+    .select('id, nome')
+    .eq('unidade_id', unidadeId)
+    .order('nome', { ascending: true });
+
+  if (error) {
+    console.error('Erro ao carregar equipes para filtro:', error);
+    selectEquipe.innerHTML = '<option value="">Erro ao carregar equipes</option>';
+    return;
+  }
+
+  if (!equipes || equipes.length === 0) {
+    selectEquipe.innerHTML = '<option value="">Nenhuma equipe cadastrada nesta unidade</option>';
+  } else {
+    selectEquipe.innerHTML = '<option value="">Todas as equipes</option>' +
+      equipes.map(eq => `<option value="${encodeURIComponent(eq.id)}">${window.sanitizar_texto(eq.nome)}</option>`).join('');
+  }
+}
+
+function mudar_mes(delta) {
+  data_atual_calendario.setMonth(data_atual_calendario.getMonth() + delta);
+  renderizar_calendario();
+}
+
+function ir_para_hoje() {
+  data_atual_calendario = new Date();
+  renderizar_calendario();
+}
+
+function obter_classe_cor_tipo(tipo) {
+  if (!tipo) return 'outro';
+  const t = tipo.toLowerCase();
+  if (t.includes('férias') || t.includes('ferias')) return 'ferias';
+  if (t.includes('atestado')) return 'atestado';
+  if (t.includes('abono')) return 'abono';
+  if (t.includes('folga')) return 'folga';
+  if (t.includes('licença') || t.includes('licenca')) return 'licenca';
+  return 'outro';
+}
+
+function formatar_data_iso(data) {
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, '0');
+  const dia = String(data.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
+}
+
+function formatar_data_br(data_iso) {
+  if (!data_iso) return '-';
+  const partes = data_iso.split('-');
+  return `${partes[2]}/${partes[1]}/${partes[0]}`;
+}
+
+function filtrar_ausencias() {
+  renderizar_calendario();
+}
+
+function renderizar_calendario() {
+  const containerGrade = document.getElementById('grade_dias_mes');
+  const tituloMesAno = document.getElementById('titulo_mes_ano');
+  if (!containerGrade || !tituloMesAno) return;
+
+  const ano = data_atual_calendario.getFullYear();
+  const mes = data_atual_calendario.getMonth();
+
+  const primeiroDiaMes = new Date(ano, mes, 1);
+  const ultimoDiaMes = new Date(ano, mes + 1, 0);
+
+  const nomeMes = data_atual_calendario.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  tituloMesAno.innerText = nomeMes;
+
+  const diaSemanaInicial = primeiroDiaMes.getDay();
+  const totalDiasMes = ultimoDiaMes.getDate();
+
+  const termoBusca = (document.getElementById('campo_busca_ausencia')?.value || '').toLowerCase().trim();
+  const filtroTipo = document.getElementById('filtro_tipo_ausencia')?.value || '';
+  const filtroUnidade = document.getElementById('filtro_unidade_ausencia')?.value || '';
+  const filtroEquipe = document.getElementById('filtro_equipe_ausencia')?.value || '';
+
+  const ausenciasFiltradas = lista_ausencias_todas.filter(a => {
+    const nome = a.funcionarios?.nome ? a.funcionarios.nome.toLowerCase() : '';
+    const bateNome = nome.includes(termoBusca);
+    const bateTipo = filtroTipo === '' || a.tipo_ausencia === filtroTipo;
+
+    const unidadeIdFunc = a.funcionarios?.equipes?.unidade_id || a.funcionarios?.equipes?.unidades?.id;
+    const bateUnidade = filtroUnidade === '' || unidadeIdFunc === filtroUnidade;
+
+    const equipeIdFunc = a.funcionarios?.equipe_id || a.funcionarios?.equipes?.id;
+    const bateEquipe = filtroEquipe === '' || equipeIdFunc === filtroEquipe;
+
+    return bateNome && bateTipo && bateUnidade && bateEquipe;
+  });
+
+  let gradeHtml = '';
+
+  // Dias do mês anterior
+  const ultimoDiaMesAnterior = new Date(ano, mes, 0).getDate();
+  for (let i = diaSemanaInicial - 1; i >= 0; i--) {
+    const diaNum = ultimoDiaMesAnterior - i;
+    gradeHtml += `<div class="celula-dia outro-mes"><span class="numero-dia">${diaNum}</span></div>`;
+  }
+
+  const hojeStr = formatar_data_iso(new Date());
+
+  // Dias do mês atual
+  for (let dia = 1; dia <= totalDiasMes; dia++) {
+    const dataAtual = new Date(ano, mes, dia);
+    const dataIso = formatar_data_iso(dataAtual);
+    const eHoje = dataIso === hojeStr ? 'hoje' : '';
+
+    let barrasHtml = '';
+
+    ausenciasFiltradas.forEach(ausencia => {
+      if (dataIso >= ausencia.data_inicio && dataIso <= ausencia.data_fim) {
+        const classeCor = obter_classe_cor_tipo(ausencia.tipo_ausencia);
+
+        const eInicio = dataIso === ausencia.data_inicio ? 'inicio' : '';
+        const eFim = dataIso === ausencia.data_fim ? 'fim' : '';
+        const eMeio = (!eInicio && !eFim) ? 'meio' : '';
+
+        const nomeFuncionario = window.sanitizar_texto(ausencia.funcionarios?.nome || 'Funcionário');
+        const tipoAusenciaSeguro = window.sanitizar_texto(ausencia.tipo_ausencia);
+        const ausJson = window.sanitizar_texto(JSON.stringify(ausencia));
+        const textoExibicao = (eInicio || dia === 1 || dataAtual.getDay() === 0) 
+          ? `${nomeFuncionario} (${tipoAusenciaSeguro})` 
+          : '&nbsp;';
+
+        barrasHtml += `
+          <div 
+            class="barra-ausencia ${classeCor} ${eInicio} ${eFim} ${eMeio}" 
+            data-acao="abrir-detalhes-ausencia"
+            data-ausencia='${ausJson}'
+            title="${nomeFuncionario} - ${tipoAusenciaSeguro} (${formatar_data_br(ausencia.data_inicio)} até ${formatar_data_br(ausencia.data_fim)})"
+          >
+            ${textoExibicao}
+          </div>
+        `;
+      }
+    });
+
+    gradeHtml += `
+      <div class="celula-dia ${eHoje}">
+        <span class="numero-dia">${dia}</span>
+        ${barrasHtml}
+      </div>
+    `;
+  }
+
+  // Dias do mês seguinte
+  const totalCelulasExibidas = diaSemanaInicial + totalDiasMes;
+  const celulasRestantes = (7 - (totalCelulasExibidas % 7)) % 7;
+  for (let i = 1; i <= celulasRestantes; i++) {
+    gradeHtml += `<div class="celula-dia outro-mes"><span class="numero-dia">${i}</span></div>`;
+  }
+
+  // Mutação única
+  containerGrade.innerHTML = gradeHtml;
+}
+
+function abrir_modal_detalhes_ausencia(ausencia) {
+  ausencia_selecionada = ausencia;
+
+  const dInicio = new Date(ausencia.data_inicio);
+  const dFim = new Date(ausencia.data_fim);
+  const dias = Math.ceil((dFim - dInicio) / (1000 * 60 * 60 * 24)) + 1;
+
+  document.getElementById('detalhe_funcionario').innerText = ausencia.funcionarios?.nome || '-';
+  document.getElementById('detalhe_tipo').innerText = ausencia.tipo_ausencia || '-';
+  document.getElementById('detalhe_periodo').innerText = `${formatar_data_br(ausencia.data_inicio)} até ${formatar_data_br(ausencia.data_fim)}`;
+  document.getElementById('detalhe_duracao').innerText = `${dias} dia(s)`;
+  document.getElementById('detalhe_motivo').innerText = ausencia.motivo_observacao || 'Sem observações.';
+
+  const modal = document.getElementById('modal_detalhes_ausencia');
+  if (modal) modal.classList.remove('oculto');
+}
+
+function fechar_modal_detalhes_ausencia() {
+  const modal = document.getElementById('modal_detalhes_ausencia');
+  if (modal) modal.classList.add('oculto');
+  ausencia_selecionada = null;
+}
+
+async function excluir_ausencia_atual() {
+  if (!ausencia_selecionada) return;
+
+  const nomeFunc = ausencia_selecionada.funcionarios?.nome || 'o funcionário';
+  if (!confirm(`Tem certeza que deseja excluir o registro de ausência de ${nomeFunc}?`)) return;
+
+  const { error } = await window._supabase
+    .from('ausencias')
+    .delete()
+    .eq('id', ausencia_selecionada.id);
+
+  if (error) {
+    alert('Erro ao excluir registro: ' + error.message);
+  } else {
+    fechar_modal_detalhes_ausencia();
+    await carregar_ausencias();
+  }
+}
+
+async function abrir_modal_registrar_ausencia() {
+  const modal = document.getElementById('modal_cadastro_ausencia');
+  if (modal) modal.classList.remove('oculto');
+  await carregar_select_funcionarios();
+}
+
+function fechar_modal_registrar_ausencia() {
+  const modal = document.getElementById('modal_cadastro_ausencia');
+  if (modal) modal.classList.add('oculto');
+  const form = document.getElementById('form_cadastro_ausencia');
+  if (form) form.reset();
+}
+
+async function carregar_select_funcionarios() {
+  const select = document.getElementById('select_funcionario_ausencia');
+  if (!select) return;
+
+  select.innerHTML = '<option value="">Carregando funcionários...</option>';
+
+  const { data: funcionarios, error } = await window._supabase
+    .from('funcionarios')
+    .select('id, nome, cargo')
+    .order('nome', { ascending: true });
+
+  if (error) {
+    console.error('Erro ao buscar funcionários:', error);
+    select.innerHTML = '<option value="">Erro ao carregar funcionários</option>';
+    return;
+  }
+
+  lista_funcionarios_todos = funcionarios || [];
+
+  select.innerHTML = '<option value="">-- Selecione o funcionário --</option>' +
+    lista_funcionarios_todos.map(f => {
+      const nome_seguro = window.sanitizar_texto(f.nome);
+      const cargo_seguro = window.sanitizar_texto(f.cargo || 'Sem cargo');
+      return `<option value="${encodeURIComponent(f.id)}">${nome_seguro} (${cargo_seguro})</option>`;
+    }).join('');
+}
+
+function validar_intervalo_datas() {
+  const inicioEl = document.getElementById('data_inicio_ausencia');
+  const fimEl = document.getElementById('data_fim_ausencia');
+  if (!inicioEl || !fimEl) return;
+
+  const inicio = inicioEl.value;
+  const fim = fimEl.value;
+
+  if (inicio && fim && new Date(fim) < new Date(inicio)) {
+    alert('A data de término não pode ser anterior à data de início.');
+    fimEl.value = inicio;
+  }
+}
+
+async function salvar_registro_ausencia() {
+  if (salvando) return;
+
+  const form = document.getElementById('form_cadastro_ausencia');
+  const btnSubmit = form ? form.querySelector('button[type="submit"]') : null;
+  const textoOriginal = btnSubmit ? btnSubmit.innerText : '';
+
+  const funcionario_id = document.getElementById('select_funcionario_ausencia').value;
+  const tipo_ausencia = document.getElementById('tipo_ausencia').value;
+  const data_inicio = document.getElementById('data_inicio_ausencia').value;
+  const data_fim = document.getElementById('data_fim_ausencia').value;
+  const motivo_observacao = document.getElementById('motivo_observacao_ausencia').value;
+
+  try {
+    salvando = true;
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+      btnSubmit.innerText = 'Salvando...';
+    }
+
+    const { error } = await window._supabase.from('ausencias').insert([{
+      funcionario_id,
+      tipo_ausencia,
+      data_inicio,
+      data_fim,
+      motivo_observacao: motivo_observacao ? motivo_observacao.trim() : null
+    }]);
+
+    if (error) {
+      alert('Erro ao registrar ausência: ' + error.message);
+    } else {
+      fechar_modal_registrar_ausencia();
+      await carregar_ausencias();
+    }
+  } finally {
+    salvando = false;
+    if (btnSubmit) {
+      btnSubmit.disabled = false;
+      btnSubmit.innerText = textoOriginal;
+    }
+  }
+}

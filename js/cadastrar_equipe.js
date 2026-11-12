@@ -1,9 +1,9 @@
-let equipe_atual = null;
-let lista_equipes_todas = [];
-let lista_unidades_todas = [];
-let membros_adicionar = new Set();
-let membros_remover = new Set();
-let lista_funcionarios_todos = [];
+var equipe_atual = null;
+var lista_equipes_todas = [];
+var lista_unidades_equipe = [];
+var membros_adicionar = new Set();
+var membros_remover = new Set();
+var lista_funcionarios_equipe = [];
 
 async function carregar_equipes() {
   const { data, error } = await _supabase
@@ -14,10 +14,10 @@ async function carregar_equipes() {
   if (error) return console.error('Erro ao buscar equipes:', error);
 
   lista_equipes_todas = data || [];
-  exibir_equipes(lista_equipes_todas);
+  exibir_equipes_geral(lista_equipes_todas);
 }
 
-function exibir_equipes(lista) {
+function exibir_equipes_geral(lista) {
   const tbody = document.getElementById('tabela_equipes');
   if (!tbody) return;
   tbody.innerHTML = '';
@@ -50,7 +50,7 @@ function exibir_equipes(lista) {
   });
 }
 
-function filtrar_equipes() {
+function filtrar_equipes_geral() {
   const campoBusca = document.getElementById('campo_busca_equipe');
   if (!campoBusca) return;
   const termo = campoBusca.value.toLowerCase().trim();
@@ -68,7 +68,14 @@ function filtrar_equipes() {
     return bate_nome || bate_descricao || bate_unidade || bate_membro;
   });
 
-  exibir_equipes(filtradas);
+  exibir_equipes_geral(filtradas);
+}
+
+if (typeof window.filtrar_equipes !== 'function') {
+  window.filtrar_equipes = function() {
+    if (document.getElementById('tabela_equipes')) filtrar_equipes_geral();
+    else if (typeof filtrar_equipes_unidade === 'function' && document.getElementById('tabela_equipes_unidade')) filtrar_equipes_unidade();
+  };
 }
 
 async function carregar_unidades_select(selectElementId, valorSelecionado = '') {
@@ -88,10 +95,10 @@ async function carregar_unidades_select(selectElementId, valorSelecionado = '') 
     return;
   }
 
-  lista_unidades_todas = unidades || [];
+  lista_unidades_equipe = unidades || [];
   selectUnidade.innerHTML = '<option value="">-- Selecione a unidade (opcional) --</option>';
 
-  lista_unidades_todas.forEach(u => {
+  lista_unidades_equipe.forEach(u => {
     const nome_seguro = sanitizar_texto(u.nome);
     selectUnidade.innerHTML += `<option value="${u.id}">${nome_seguro}</option>`;
   });
@@ -101,36 +108,43 @@ async function carregar_unidades_select(selectElementId, valorSelecionado = '') 
   }
 }
 
-async function abrir_modal_cadastro() {
+async function abrir_modal_cadastro_equipe() {
   const modal = document.getElementById('modal_cadastro_equipe');
   if (modal) modal.classList.remove('oculto');
   await carregar_unidades_select('novo_unidade_equipe');
 }
 
-function fechar_modal_cadastro() {
+function fechar_modal_cadastro_equipe() {
   const modal = document.getElementById('modal_cadastro_equipe');
   if (modal) modal.classList.add('oculto');
   const form = document.getElementById('form_cadastro_equipe');
   if (form) form.reset();
 }
 
-async function abrir_modal_detalhes(equipe) {
+async function abrir_modal_detalhes_equipe(equipe) {
   equipe_atual = equipe;
-  document.getElementById('modal_nome_equipe').innerText = equipe.nome;
-  document.getElementById('modal_descricao_equipe').innerText = equipe.descricao || 'Sem descrição cadastrada.';
-  document.getElementById('modal_unidade_equipe').innerText = equipe.unidades?.nome || 'Nenhuma unidade vinculada';
-  document.getElementById('modal_data_criacao').innerText = new Date(equipe.created_at).toLocaleDateString('pt-BR');
+  const nomeEl = document.getElementById('modal_nome_equipe');
+  if (nomeEl) nomeEl.innerText = equipe.nome;
+  const descEl = document.getElementById('modal_descricao_equipe');
+  if (descEl) descEl.innerText = equipe.descricao || 'Sem descrição cadastrada.';
+  const unidEl = document.getElementById('modal_unidade_equipe');
+  if (unidEl) unidEl.innerText = equipe.unidades?.nome || 'Nenhuma unidade vinculada';
+  const dataEl = document.getElementById('modal_data_criacao');
+  if (dataEl) dataEl.innerText = new Date(equipe.created_at).toLocaleDateString('pt-BR');
 
-  document.getElementById('modo_visualizacao').classList.remove('oculto');
-  document.getElementById('modo_edicao').classList.add('oculto');
-  document.getElementById('modal_equipe').classList.remove('oculto');
+  const visEl = document.getElementById('modo_visualizacao');
+  if (visEl) visEl.classList.remove('oculto');
+  const editEl = document.getElementById('modo_edicao');
+  if (editEl) editEl.classList.add('oculto');
+  const modal = document.getElementById('modal_equipe');
+  if (modal) modal.classList.remove('oculto');
 
   await carregar_membros_visualizacao();
 }
 
 async function carregar_membros_visualizacao() {
   const lista = document.getElementById('modal_lista_membros_vis');
-  if (!lista) return;
+  if (!lista || !equipe_atual) return;
   lista.innerHTML = '<li>Carregando...</li>';
 
   const { data: membros } = await _supabase
@@ -151,6 +165,7 @@ async function carregar_membros_visualizacao() {
 }
 
 async function ativar_modo_edicao() {
+  if (!equipe_atual) return;
   document.getElementById('edit_nome_equipe').value = equipe_atual.nome;
   document.getElementById('edit_descricao_equipe').value = equipe_atual.descricao || '';
 
@@ -166,19 +181,20 @@ async function ativar_modo_edicao() {
     .from('funcionarios')
     .select('id, nome, cargo, equipe_id');
 
-  lista_funcionarios_todos = funcionarios || [];
+  lista_funcionarios_equipe = funcionarios || [];
   renderizar_editores_membros();
 }
 
 function renderizar_editores_membros() {
   const lista = document.getElementById('modal_lista_membros_edit');
   const select = document.getElementById('select_funcionarios_disponiveis');
+  if (!lista || !select) return;
 
-  const membros_atuais = lista_funcionarios_todos.filter(f => 
+  const membros_atuais = lista_funcionarios_equipe.filter(f => 
     (f.equipe_id === equipe_atual.id || membros_adicionar.has(f.id)) && !membros_remover.has(f.id)
   );
 
-  const disponiveis = lista_funcionarios_todos.filter(f => 
+  const disponiveis = lista_funcionarios_equipe.filter(f => 
     (!f.equipe_id && !membros_adicionar.has(f.id)) || membros_remover.has(f.id)
   );
 
@@ -212,6 +228,7 @@ function renderizar_editores_membros() {
 
 function adicionar_membro_equipe() {
   const select = document.getElementById('select_funcionarios_disponiveis');
+  if (!select) return;
   const id = select.value;
   if (!id) return alert('Selecione um funcionário da lista.');
 
@@ -292,7 +309,7 @@ function cancelar_edicao() {
   carregar_membros_visualizacao();
 }
 
-function fechar_modal_detalhes() {
+function fechar_modal_detalhes_equipe() {
   const modal = document.getElementById('modal_equipe');
   if (modal) modal.classList.add('oculto');
   membros_adicionar.clear();
@@ -300,11 +317,31 @@ function fechar_modal_detalhes() {
   equipe_atual = null;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function abrir_modal_detalhes(item) {
+  if (document.getElementById('modal_equipe')) {
+    abrir_modal_detalhes_equipe(item);
+  } else if (typeof abrir_modal_detalhes_funcionario === 'function' && document.getElementById('modal_detalhes_funcionario')) {
+    abrir_modal_detalhes_funcionario(item);
+  }
+}
+
+function fechar_modal_detalhes() {
+  if (document.getElementById('modal_equipe')) {
+    fechar_modal_detalhes_equipe();
+  } else if (typeof fechar_modal_detalhes_funcionario === 'function' && document.getElementById('modal_detalhes_funcionario')) {
+    fechar_modal_detalhes_funcionario();
+  }
+}
+
+function iniciar_tela_equipes() {
+  equipe_atual = null;
+  membros_adicionar.clear();
+  membros_remover.clear();
   carregar_equipes();
 
   const formCadastro = document.getElementById('form_cadastro_equipe');
-  if (formCadastro) {
+  if (formCadastro && !formCadastro.dataset.eventoRegistrado) {
+    formCadastro.dataset.eventoRegistrado = "true";
     formCadastro.addEventListener('submit', async (e) => {
       e.preventDefault();
       const nome = document.getElementById('novo_nome_equipe').value;
@@ -326,10 +363,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  window.addEventListener('click', (event) => {
-    const modal_detalhes = document.getElementById('modal_equipe');
-    const modal_cadastro = document.getElementById('modal_cadastro_equipe');
-    if (event.target === modal_detalhes) fechar_modal_detalhes();
-    if (event.target === modal_cadastro) fechar_modal_cadastro();
-  });
+  if (!window.listenersModalEquipesInjetados) {
+    window.listenersModalEquipesInjetados = true;
+    window.addEventListener('click', (event) => {
+      const modal_detalhes = document.getElementById('modal_equipe');
+      const modal_cadastro = document.getElementById('modal_cadastro_equipe');
+      if (modal_detalhes && event.target === modal_detalhes) fechar_modal_detalhes();
+      if (modal_cadastro && event.target === modal_cadastro) fechar_modal_cadastro();
+    });
+  }
+}
+
+// 1. Gatilho F5 / Acesso direto
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('tabela_equipes')) {
+    iniciar_tela_equipes();
+  }
+});
+
+// 2. Gatilho Navegação SPA
+document.addEventListener('spa_tela_carregada', (e) => {
+  const url_carregada = e.detail;
+  if (url_carregada.includes('equipes.html')) {
+    iniciar_tela_equipes();
+  }
 });
